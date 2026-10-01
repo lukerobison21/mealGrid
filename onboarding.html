@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MealGrid — Goal Setup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="brand display">MEALGRID</div>
+    <div class="brand-sub">Meal Planning HUD</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="index.html">Dashboard</a></li>
+      <li><a class="nav-link is-active" href="onboarding.html">Goal Setup</a></li>
+      <li><a class="nav-link" href="import.html">Import Recipe</a></li>
+      <li><a class="nav-link" href="recipe.html">Recipe Detail</a></li>
+      <li><a class="nav-link" href="pantry.html">Pantry</a></li>
+      <li><a class="nav-link" href="group.html">Group Plan</a></li>
+    </ul>
+    <div class="sidebar-status"><span class="status-dot"></span>Pantry synced 4m ago</div>
+  </aside>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Onboarding · Step 1 of 3</span>
+        <h1 class="page-title display">Set Your Objective</h1>
+      </div>
+      <div class="step-track">
+        <span class="step-dot is-done"></span>
+        <span class="step-dot"></span>
+        <span class="step-dot"></span>
+      </div>
+    </div>
+
+    <div class="split">
+
+      <div class="stack">
+        <div class="label">Choose a goal</div>
+
+        <div class="panel panel-corners panel-select">
+          <div class="label" style="margin-bottom:6px;">◈ Selected</div>
+          <h2 class="display" style="font-size:16px;">Build Muscle</h2>
+          <p class="dim" style="margin-top:6px;">Higher protein target, moderate calorie surplus.</p>
+        </div>
+
+        <div class="panel panel-muted">
+          <h2 style="font-size:14px;font-weight:400;">Lose Weight</h2>
+          <p class="dim" style="margin-top:6px;">Caloric deficit with protein preserved to protect lean mass.</p>
+        </div>
+
+        <div class="panel panel-muted">
+          <h2 style="font-size:14px;font-weight:400;">Gain Weight</h2>
+          <p class="dim" style="margin-top:6px;">Caloric surplus with higher energy-density meals.</p>
+        </div>
+
+        <div class="panel panel-muted">
+          <h2 style="font-size:14px;font-weight:400;">Maintain</h2>
+          <p class="dim" style="margin-top:6px;">Balanced macros held steady at your current weight.</p>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="label">Your stats</div>
+        <div class="cols-2">
+          <div class="panel"><div class="dim" style="font-size:10px;letter-spacing:.1em;">WEIGHT</div><div class="value-lg" style="font-size:17px;margin-top:4px;">178 lb</div></div>
+          <div class="panel"><div class="dim" style="font-size:10px;letter-spacing:.1em;">HEIGHT</div><div class="value-lg" style="font-size:17px;margin-top:4px;">5'10"</div></div>
+          <div class="panel"><div class="dim" style="font-size:10px;letter-spacing:.1em;">AGE</div><div class="value-lg" style="font-size:17px;margin-top:4px;">27</div></div>
+          <div class="panel"><div class="dim" style="font-size:10px;letter-spacing:.1em;">ACTIVITY</div><div class="value-lg" style="font-size:17px;margin-top:4px;">Moderate</div></div>
+        </div>
+
+        <div class="panel panel-corners">
+          <div class="label" style="margin-bottom:8px;">Computed Targets</div>
+          <div class="value-lg">2,650 <span class="dim" style="font-size:12px;">kcal / day</span></div>
+          <p class="dim" style="margin-top:6px;">190g protein · 280g carbs · 80g fat</p>
+        </div>
+
+        <a class="btn btn-primary btn-block" href="index.html">Continue to Dashboard →</a>
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+</body>
+</html>

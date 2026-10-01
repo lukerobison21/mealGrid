@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MealGrid — Group Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="brand display">MEALGRID</div>
+    <div class="brand-sub">Meal Planning HUD</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="index.html">Dashboard</a></li>
+      <li><a class="nav-link" href="onboarding.html">Goal Setup</a></li>
+      <li><a class="nav-link" href="import.html">Import Recipe</a></li>
+      <li><a class="nav-link" href="recipe.html">Recipe Detail</a></li>
+      <li><a class="nav-link" href="pantry.html">Pantry</a></li>
+      <li><a class="nav-link is-active" href="group.html">Group Plan</a></li>
+    </ul>
+    <div class="sidebar-status"><span class="status-dot"></span>Pantry synced 4m ago</div>
+  </aside>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Meal Plan</span>
+        <h1 class="page-title display">Planning For</h1>
+      </div>
+      <div class="row wrap">
+        <span class="chip">Just Me</span>
+        <span class="chip is-selected">Family (4)</span>
+        <span class="chip">Custom</span>
+      </div>
+    </div>
+
+    <div class="split">
+
+      <div class="stack">
+        <div class="label">Household</div>
+        <div class="panel"><p class="dim">2 adults · 2 kids (ages 8 and 11)</p></div>
+
+        <div class="label">Garlic Sesame Stir Fry</div>
+        <div class="panel panel-corners">
+          <div class="row-between">
+            <span class="dim">Base (serves 1)</span>
+            <span>612 kcal · $4.85</span>
+          </div>
+          <hr class="glow-rule" style="margin:12px 0;">
+          <div class="row-between">
+            <span style="color:var(--accent);">Scaled × 4</span>
+            <span class="value-lg" style="font-size:17px;">2,448 kcal · $19.40</span>
+          </div>
+          <p class="dim" style="margin-top:8px;">≈ $4.85 and 612 kcal per person</p>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="label">Ingredient Scaling</div>
+        <div class="panel">
+          <div class="list-row"><span>Chicken thigh</span><span class="dim">6 oz → 24 oz</span></div>
+          <div class="list-row"><span>Broccoli</span><span class="dim">1 cup → 4 cups</span></div>
+          <div class="list-row"><span>Sesame oil</span><span class="dim">1 tbsp → 4 tbsp</span></div>
+          <div class="list-row"><span>Soy sauce</span><span class="dim">2 tbsp → 8 tbsp</span></div>
+        </div>
+
+        <div class="label">Pantry Impact</div>
+        <div class="panel">
+          <p class="dim">Scaling ×4 uses your full sesame oil stock — replace it after this meal.</p>
+        </div>
+
+        <a class="btn btn-primary btn-block" href="index.html">Add to Family Plan</a>
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+</body>
+</html>

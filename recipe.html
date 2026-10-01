@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MealGrid — Recipe Detail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="brand display">MEALGRID</div>
+    <div class="brand-sub">Meal Planning HUD</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="index.html">Dashboard</a></li>
+      <li><a class="nav-link" href="onboarding.html">Goal Setup</a></li>
+      <li><a class="nav-link" href="import.html">Import Recipe</a></li>
+      <li><a class="nav-link is-active" href="recipe.html">Recipe Detail</a></li>
+      <li><a class="nav-link" href="pantry.html">Pantry</a></li>
+      <li><a class="nav-link" href="group.html">Group Plan</a></li>
+    </ul>
+    <div class="sidebar-status"><span class="status-dot"></span>Pantry synced 4m ago</div>
+  </aside>
+
+  <main class="main">
+
+    <div class="page-header">
+      <a class="back-link" href="import.html">← All Recipes</a>
+      <div class="page-meta">Imported via web · 2 hours ago</div>
+    </div>
+
+    <div class="split">
+
+      <div class="stack">
+        <div class="thumb thumb-lg">Recipe Image / Source Preview</div>
+        <h1 class="page-title display">Garlic Sesame Stir Fry</h1>
+        <div class="panel panel-corners">
+          <div class="label" style="margin-bottom:8px;">Ingredients · Pantry Match</div>
+          <div id="recipe-ingredients"></div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="cols-2">
+          <div class="panel panel-center">
+            <div class="label">Calories</div>
+            <div class="value-lg" style="font-size:18px;margin-top:6px;">612</div>
+          </div>
+          <div class="panel panel-center">
+            <div class="label">Cost</div>
+            <div id="recipe-cost" class="value-lg" style="font-size:18px;margin-top:6px;"></div>
+          </div>
+        </div>
+
+        <div class="panel panel-corners">
+          <div class="label" style="margin-bottom:6px;">Fit to Goal</div>
+          <p class="dim">Matches your Lean Bulk target within 8%.</p>
+          <div class="bar" style="margin-top:10px;"><div class="bar-fill" style="width:92%"></div></div>
+        </div>
+
+        <div class="panel">
+          <div class="label" style="margin-bottom:8px;">Similar Recipes</div>
+          <div class="list-row"><span>Sesame Chicken Rice Bowl</span><span class="dim">$4.10 · 590 kcal</span></div>
+          <div class="list-row"><span>Broccoli Beef Stir Fry</span><span class="dim">$5.30 · 640 kcal</span></div>
+        </div>
+
+        <div class="row wrap">
+          <a class="btn btn-ghost" href="group.html">Scale for Group</a>
+          <button id="add-recipe-to-plan" class="btn btn-primary" type="button">Add to Plan</button>
+        </div>
+        <p id="recipe-plan-status" class="dim" aria-live="polite"></p>
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+<div id="app-notice" class="app-notice" role="status" aria-live="polite" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

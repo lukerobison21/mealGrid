@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MealGrid — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="brand display">MEALGRID</div>
+    <div class="brand-sub">Meal Planning HUD</div>
+    <ul class="nav-list">
+      <li><a class="nav-link is-active" href="index.html">Dashboard</a></li>
+      <li><a class="nav-link" href="onboarding.html">Goal Setup</a></li>
+      <li><a class="nav-link" href="import.html">Import Recipe</a></li>
+      <li><a class="nav-link" href="recipe.html">Recipe Detail</a></li>
+      <li><a class="nav-link" href="pantry.html">Pantry</a></li>
+      <li><a class="nav-link" href="group.html">Group Plan</a></li>
+    </ul>
+    <div class="sidebar-status"><span class="status-dot"></span>Pantry synced 4m ago</div>
+  </aside>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Tuesday · Week 14</span>
+        <h1 class="page-title display">Dashboard</h1>
+      </div>
+      <div class="row wrap">
+        <span class="chip is-selected">Lean Bulk</span>
+        <span class="chip is-selected">Serves 1</span>
+      </div>
+    </div>
+
+    <div class="cols-3">
+      <div class="panel panel-corners">
+        <div class="label">Calories Today</div>
+        <div class="value-lg" style="margin-top:8px;">1,740<span class="dim" style="font-size:12px;"> / 2,200</span></div>
+        <div class="bar" style="margin-top:10px;"><div class="bar-fill" style="width:79%"></div></div>
+      </div>
+      <div class="panel panel-corners">
+        <div class="label">Cost This Week</div>
+        <div id="weekly-cost" class="value-lg" style="margin-top:8px;">$0.00</div>
+        <p id="budget-caption" class="dim" style="margin-top:6px;">Budget $65.00</p>
+        <div class="bar" style="margin-top:10px;"><div id="budget-bar" class="bar-fill" style="width:0%"></div></div>
+      </div>
+      <div class="panel panel-corners">
+        <div class="label">Pantry Coverage</div>
+        <div class="row" style="align-items:center;margin-top:8px;">
+          <div id="coverage-ring" class="ring ring-sm"></div>
+          <p id="pantry-coverage" class="dim" style="margin-left:12px;">0 of 0 planned ingredients on hand</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel panel-corners">
+      <div class="label" style="margin-bottom:12px;">This Week's Plan</div>
+      <div id="weekly-plan"></div>
+      <p id="empty-plan" class="dim" hidden>No meals planned yet. Open a recipe to add one.</p>
+    </div>
+
+    <div class="panel panel-corners">
+      <div class="label" style="margin-bottom:12px;">Shopping List · Missing for This Plan</div>
+      <div id="shopping-list"></div>
+      <p id="empty-shopping-list" class="dim" hidden>Your planned meals are covered by the pantry.</p>
+    </div>
+
+    <div class="row wrap">
+      <a class="btn btn-primary" href="import.html">Import a Recipe</a>
+      <a class="btn btn-ghost" href="recipe.html">View Garlic Sesame Stir Fry</a>
+      <a class="btn btn-ghost" href="group.html">Scale for Group</a>
+    </div>
+
+  </main>
+
+</div>
+<div id="app-notice" class="app-notice" role="status" aria-live="polite" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

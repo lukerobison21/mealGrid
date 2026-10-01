@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MealGrid — Pantry</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="brand display">MEALGRID</div>
+    <div class="brand-sub">Meal Planning HUD</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="index.html">Dashboard</a></li>
+      <li><a class="nav-link" href="onboarding.html">Goal Setup</a></li>
+      <li><a class="nav-link" href="import.html">Import Recipe</a></li>
+      <li><a class="nav-link" href="recipe.html">Recipe Detail</a></li>
+      <li><a class="nav-link is-active" href="pantry.html">Pantry</a></li>
+      <li><a class="nav-link" href="group.html">Group Plan</a></li>
+    </ul>
+    <div class="sidebar-status"><span class="status-dot"></span>Pantry synced 4m ago</div>
+  </aside>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Inventory</span>
+        <h1 class="page-title display">Digital Pantry</h1>
+      </div>
+      <div id="pantry-summary" class="page-meta"></div>
+    </div>
+
+    <div class="split-narrow">
+
+      <nav class="filter-list">
+        <button class="filter-link is-active" type="button" data-pantry-filter="all" aria-pressed="true">All Items</button>
+        <button class="filter-link" type="button" data-pantry-filter="low" aria-pressed="false">Low Stock</button>
+        <button class="filter-link" type="button" data-pantry-filter="Produce" aria-pressed="false">Produce</button>
+        <button class="filter-link" type="button" data-pantry-filter="Protein" aria-pressed="false">Protein</button>
+        <button class="filter-link" type="button" data-pantry-filter="Dairy" aria-pressed="false">Dairy</button>
+        <button class="filter-link" type="button" data-pantry-filter="Pantry Staples" aria-pressed="false">Pantry Staples</button>
+      </nav>
+
+      <div id="pantry-items" class="cols-3"></div>
+
+    </div>
+
+    <form id="pantry-form" class="panel panel-corners pantry-form">
+      <div class="label" style="margin-bottom:12px;">Add or Update Pantry Item</div>
+      <p class="dim form-help">Saving an existing item replaces its on-hand quantity.</p>
+      <div class="form-grid">
+        <label class="field">
+          <span class="label">Ingredient</span>
+          <input name="name" type="text" maxlength="60" required placeholder="e.g. Chicken breast">
+        </label>
+        <label class="field">
+          <span class="label">On hand</span>
+          <input name="quantity" type="number" min="0" step="0.01" required placeholder="0">
+        </label>
+        <label class="field">
+          <span class="label">Unit</span>
+          <select name="unit" required>
+            <option value="oz">oz</option><option value="lb">lb</option><option value="cup">cup</option>
+            <option value="tbsp">tbsp</option><option value="tsp">tsp</option><option value="each">each</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="label">Category</span>
+          <select name="category" required>
+            <option>Produce</option><option>Protein</option><option>Pantry Staples</option><option>Dairy</option>
+          </select>
+        </label>
+      </div>
+      <button class="btn btn-primary" type="submit">Save Pantry Item</button>
+    </form>
+
+  </main>
+
+</div>
+<div id="app-notice" class="app-notice" role="status" aria-live="polite" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

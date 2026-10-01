@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Meal Planner — Wireframe Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05080c; --panel:#0b131b; --line:#123044; --grid:#0d1c28;
+    --accent:#4DEFFF; --accent-glow:#00c8ff; --text:#dff4ff; --dim:#5c7a8c;
+    --radius:2px;
+  }
+  [data-theme="amber"]{
+    --bg:#0a0806; --panel:#14100b; --line:#3a2a12; --grid:#1a130a;
+    --accent:#FFB000; --accent-glow:#ff7a00; --text:#ffe9cf; --dim:#8c7050;
+  }
+  [data-theme="ice"]{
+    --bg:#060a10; --panel:#0d141c; --line:#1c2c3a; --grid:#0f1922;
+    --accent:#dcefff; --accent-glow:#7fd4ff; --text:#eef7ff; --dim:#5f7c8f;
+  }
+  [data-theme="green"]{
+    --bg:#050a06; --panel:#0a130c; --line:#123a1c; --grid:#0c1c10;
+    --accent:#39FF88; --accent-glow:#00FF66; --text:#dcffe6; --dim:#4d8c63;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Share Tech Mono', monospace;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:34px 34px;
+    min-height:100vh;
+  }
+  h1,h2,h3,.disp{ font-family:'Orbitron', sans-serif; letter-spacing:.04em; }
+
+  /* ---- Control bar ---- */
+  .controls{
+    position:sticky; top:0; z-index:10;
+    display:flex; flex-wrap:wrap; gap:18px; align-items:center;
+    padding:16px 24px; background:rgba(5,8,12,.9);
+    border-bottom:1px solid var(--line); backdrop-filter:blur(6px);
+  }
+  .ctrl-group{ display:flex; gap:8px; align-items:center; }
+  .ctrl-label{ font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:.1em; margin-right:4px;}
+  button{
+    font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:.05em;
+    background:transparent; color:var(--dim); border:1px solid var(--line);
+    padding:7px 14px; cursor:pointer; text-transform:uppercase; transition:.15s;
+  }
+  button:hover{ color:var(--text); border-color:var(--accent); }
+  button.active{ color:var(--bg); background:var(--accent); border-color:var(--accent); font-weight:bold;}
+  .swatch{ width:16px; height:16px; border-radius:50%; display:inline-block; margin-right:6px; vertical-align:-3px;}
+
+  .stage{ padding:40px 24px 100px; display:flex; justify-content:center; }
+
+  /* ---- Shared wireframe primitives ---- */
+  .panel{
+    position:relative; background:var(--panel); border:1px solid var(--line);
+    padding:16px;
+  }
+  .panel::before, .panel::after,
+  .corner-tl, .corner-br{ content:''; }
+  .brackets{ position:relative; }
+  .brackets::before, .brackets::after{
+    content:''; position:absolute; width:14px; height:14px;
+    border-color:var(--accent); border-style:solid; opacity:.8;
+  }
+  .brackets::before{ top:-1px; left:-1px; border-width:2px 0 0 2px; }
+  .brackets::after{ bottom:-1px; right:-1px; border-width:0 2px 2px 0; }
+
+  .label{ font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--accent); opacity:.85; margin-bottom:8px;}
+  .dim-text{ color:var(--dim); font-size:12px; }
+  .bar{ height:6px; background:var(--line); position:relative; overflow:hidden;}
+  .bar > span{ position:absolute; inset:0 auto 0 0; background:var(--accent); box-shadow:0 0 8px var(--accent-glow); }
+  .ring{
+    width:78px; height:78px; border-radius:50%;
+    border:3px solid var(--line); position:relative;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .ring::before{
+    content:''; position:absolute; inset:-3px; border-radius:50%;
+    border:3px solid transparent; border-top-color:var(--accent); border-right-color:var(--accent);
+    filter:drop-shadow(0 0 4px var(--accent-glow)); transform:rotate(-20deg);
+  }
+  .glow-line{ height:1px; background:linear-gradient(90deg, transparent, var(--accent), transparent); opacity:.6;}
+  .divider{ border:none; border-top:1px solid var(--line); margin:14px 0; }
+  .row{ display:flex; gap:12px; }
+  .col{ flex:1; }
+  .btn-primary{
+    background:var(--accent); color:var(--bg); border:none; font-weight:bold;
+    padding:10px; text-align:center; letter-spacing:.08em; text-transform:uppercase;
+    box-shadow:0 0 14px var(--accent-glow); font-size:12px;
+  }
+  .btn-ghost{
+    border:1px solid var(--accent); color:var(--accent); padding:10px; text-align:center;
+    letter-spacing:.08em; text-transform:uppercase; font-size:12px;
+  }
+  .chip{
+    display:inline-block; border:1px solid var(--line); color:var(--dim);
+    font-size:10px; padding:3px 8px; letter-spacing:.05em; text-transform:uppercase; margin:2px 4px 2px 0;
+  }
+  .chip.on{ border-color:var(--accent); color:var(--accent); }
+  .nav-item{ font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); padding:10px 0; border-left:2px solid transparent; padding-left:12px; }
+  .nav-item.active{ color:var(--accent); border-left-color:var(--accent); text-shadow:0 0 6px var(--accent-glow); }
+
+  /* ---- Mobile frame ---- */
+  .phone{
+    width:360px; border:2px solid var(--line); border-radius:26px; padding:14px 12px;
+    background:linear-gradient(180deg, rgba(255,255,255,.02), transparent);
+    box-shadow: 0 0 40px rgba(0,0,0,.6), inset 0 0 20px rgba(0,0,0,.4);
+  }
+  .phone-notch{ width:70px; height:5px; background:var(--line); border-radius:3px; margin:0 auto 12px; }
+  .phone-screen{ display:flex; flex-direction:column; gap:14px; }
+
+  /* ---- Web frame ---- */
+  .web{
+    width:100%; max-width:1100px; border:1px solid var(--line);
+  }
+  .web-top{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 24px; border-bottom:1px solid var(--line);
+  }
+  .web-body{ display:flex; min-height:520px; }
+  .web-sidebar{ width:200px; border-right:1px solid var(--line); padding:20px 18px; }
+  .web-main{ flex:1; padding:24px; display:flex; flex-direction:column; gap:18px; }
+
+  section.screen{ display:none; }
+  section.screen.active{ display:block; }
+  .grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .list-row{ display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); font-size:12px; }
+  .thumb{ width:100%; height:90px; border:1px dashed var(--line); display:flex; align-items:center; justify-content:center; color:var(--dim); font-size:10px; letter-spacing:.1em; text-transform:uppercase; }
+</style>
+</head>
+<body data-theme="cyan">
+
+<div class="controls">
+  <div class="ctrl-group">
+    <span class="ctrl-label">Theme</span>
+    <button data-theme-btn="cyan" class="active"><span class="swatch" style="background:#4DEFFF"></span>Cyan Grid</button>
+    <button data-theme-btn="amber"><span class="swatch" style="background:#FFB000"></span>Amber Core</button>
+    <button data-theme-btn="ice"><span class="swatch" style="background:#dcefff"></span>Ice White</button>
+    <button data-theme-btn="green"><span class="swatch" style="background:#39FF88"></span>Grid Green</button>
+  </div>
+  <div class="ctrl-group">
+    <span class="ctrl-label">View</span>
+    <button data-view-btn="mobile" class="active">Mobile</button>
+    <button data-view-btn="web">Web</button>
+  </div>
+  <div class="ctrl-group">
+    <span class="ctrl-label">Screen</span>
+    <button data-screen-btn="onboarding">Goal Setup</button>
+    <button data-screen-btn="dashboard" class="active">Dashboard</button>
+    <button data-screen-btn="recipe">Recipe Detail</button>
+    <button data-screen-btn="pantry">Pantry</button>
+    <button data-screen-btn="import">Import</button>
+    <button data-screen-btn="group">Group Scaling</button>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ========== MOBILE VIEWS ========== -->
+  <div data-view="mobile">
+
+    <!-- ONBOARDING / GOAL SETUP -->
+    <section class="screen" data-screen="onboarding" data-view-container="mobile">
+      <div class="phone brackets">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="disp" style="font-size:14px;letter-spacing:.1em;">SET YOUR OBJECTIVE</div>
+          <div class="dim-text">Step 1 of 3 — Goal</div>
+          <div class="bar" style="margin:4px 0 6px;"><span style="width:33%"></span></div>
+
+          <div class="panel brackets" style="border-color:var(--accent);">
+            <div class="label" style="margin:0;">◈ Selected</div>
+            <div style="font-size:15px;margin-top:4px;">Build Muscle</div>
+            <div class="dim-text">Higher protein target, moderate surplus</div>
+          </div>
+          <div class="panel" style="opacity:.5;">
+            <div style="font-size:14px;">Lose Weight</div>
+            <div class="dim-text">Caloric deficit, protein preserved</div>
+          </div>
+          <div class="panel" style="opacity:.5;">
+            <div style="font-size:14px;">Maintain</div>
+            <div class="dim-text">Balanced macros at current weight</div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="label">Your Stats</div>
+          <div class="grid3" style="gap:8px;">
+            <div class="panel" style="text-align:center;padding:8px;"><div class="dim-text" style="font-size:10px;">WEIGHT</div><div>178 lb</div></div>
+            <div class="panel" style="text-align:center;padding:8px;"><div class="dim-text" style="font-size:10px;">HEIGHT</div><div>5'10"</div></div>
+            <div class="panel" style="text-align:center;padding:8px;"><div class="dim-text" style="font-size:10px;">ACTIVITY</div><div>Mod.</div></div>
+          </div>
+
+          <div class="panel">
+            <div class="label">Computed Targets</div>
+            <div class="dim-text">2,650 kcal / day · 190g protein</div>
+          </div>
+
+          <div class="btn-primary">Continue →</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section class="screen active" data-screen="dashboard" data-view-container="mobile">
+      <div class="phone brackets">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="disp" style="font-size:14px;letter-spacing:.1em;">MEALGRID</div>
+            <div class="dim-text">TUE · WK 14</div>
+          </div>
+          <div class="glow-line"></div>
+
+          <div class="panel">
+            <div class="label">Today — Macros</div>
+            <div class="row" style="align-items:center;">
+              <div class="ring"><span style="font-size:11px;">78%</span></div>
+              <div class="col" style="margin-left:14px;">
+                <div class="dim-text" style="margin-bottom:6px;">Protein 142/180g</div>
+                <div class="bar"><span style="width:79%"></span></div>
+                <div class="dim-text" style="margin:8px 0 6px;">Calories 1740/2200</div>
+                <div class="bar"><span style="width:79%"></span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="label">Goal · Group Size</div>
+            <div class="row" style="gap:6px;flex-wrap:wrap;">
+              <span class="chip on">Lean Bulk</span>
+              <span class="chip">Cut</span>
+              <span class="chip">Maintain</span>
+              <span class="chip on">Serves 1</span>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="label">Planned Meals</div>
+            <div class="list-row"><span>Overnight Oats + Berries</span><span class="dim-text">410 kcal</span></div>
+            <div class="list-row"><span>Chicken Bowl (imported)</span><span class="dim-text">$3.20</span></div>
+            <div class="list-row"><span>Stir Fry — missing 2 items</span><span style="color:var(--accent)">◈</span></div>
+          </div>
+
+          <div class="btn-primary">+ Import Recipe</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECIPE DETAIL -->
+    <section class="screen" data-screen="recipe" data-view-container="mobile">
+      <div class="phone brackets">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="dim-text">← BACK</div>
+          <div class="thumb">RECIPE IMAGE / SOURCE THUMB</div>
+          <div class="disp" style="font-size:15px;">GARLIC SESAME STIR FRY</div>
+          <div class="dim-text">via instagram.com/@source · imported 2h ago</div>
+          <div class="divider"></div>
+          <div class="grid3">
+            <div class="panel" style="text-align:center;padding:10px;">
+              <div class="label" style="margin:0;">Kcal</div><div>612</div>
+            </div>
+            <div class="panel" style="text-align:center;padding:10px;">
+              <div class="label" style="margin:0;">Cost</div><div>$4.85</div>
+            </div>
+            <div class="panel" style="text-align:center;padding:10px;">
+              <div class="label" style="margin:0;">Serves</div><div>1</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="label">Ingredients · Pantry Match</div>
+            <div class="list-row"><span>Broccoli, 1 cup</span><span style="color:var(--accent)">IN PANTRY</span></div>
+            <div class="list-row"><span>Sesame oil, 1 tbsp</span><span style="color:var(--accent)">IN PANTRY</span></div>
+            <div class="list-row"><span>Chicken thigh, 6oz</span><span class="dim-text">NEEDED</span></div>
+          </div>
+          <div class="row">
+            <div class="btn-ghost col">Similar Recipes</div>
+            <div class="btn-primary col">Add to Plan</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANTRY -->
+    <section class="screen" data-screen="pantry" data-view-container="mobile">
+      <div class="phone brackets">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="disp" style="font-size:14px;">DIGITAL PANTRY</div>
+          <div class="dim-text">23 items · 4 low stock</div>
+          <div class="glow-line"></div>
+          <div class="panel">
+            <div class="list-row"><span>Chicken breast</span><span class="dim-text">1.2 lb</span></div>
+            <div class="list-row"><span>Brown rice</span><span class="dim-text">low ◈</span></div>
+            <div class="list-row"><span>Broccoli</span><span class="dim-text">2 cups</span></div>
+            <div class="list-row"><span>Sesame oil</span><span class="dim-text">3/4 bottle</span></div>
+            <div class="list-row"><span>Greek yogurt</span><span class="dim-text">low ◈</span></div>
+          </div>
+          <div class="btn-ghost">+ Add Item Manually</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IMPORT -->
+    <section class="screen" data-screen="import" data-view-container="mobile">
+      <div class="phone brackets">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="disp" style="font-size:14px;">IMPORT RECIPE</div>
+          <div class="glow-line"></div>
+          <div class="panel" style="text-align:center;padding:28px 14px;">
+            <div class="label" style="margin:0 0 10px;">Paste Link or Share</div>
+            <div class="dim-text">tiktok.com/@user/video/...</div>
+          </div>
+          <div class="row" style="gap:6px;flex-wrap:wrap;">
+            <span class="chip on">Website URL</span>
+            <span class="chip">Instagram</span>
+            <span class="chip">TikTok</span>
+            <span class="chip">Screenshot</span>
+          </div>
+          <div class="panel">
+            <div class="label">Parsing Preview</div>
+            <div class="dim-text">Detecting ingredients, quantities, steps…</div>
+            <div class="bar" style="margin-top:10px;"><span style="width:45%"></span></div>
+          </div>
+          <div class="btn-primary">Confirm & Save</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GROUP SCALING -->
+    <section class="screen" data-screen="group" data-view-container="mobile">
+      <div class="phone brackets">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="disp" style="font-size:14px;">PLANNING FOR</div>
+          <div class="glow-line"></div>
+
+          <div class="panel">
+            <div class="label" style="margin:0 0 10px;">Group Size</div>
+            <div class="row" style="gap:6px;flex-wrap:wrap;">
+              <span class="chip">Just Me</span>
+              <span class="chip on">Family (4)</span>
+              <span class="chip">Custom</span>
+            </div>
+            <div class="dim-text" style="margin-top:10px;">2 adults · 2 kids (age 8, 11)</div>
+          </div>
+
+          <div class="panel">
+            <div class="label">Garlic Sesame Stir Fry</div>
+            <div class="row" style="justify-content:space-between;">
+              <span class="dim-text">Base (serves 1)</span>
+              <span>612 kcal · $4.85</span>
+            </div>
+            <div class="glow-line" style="margin:8px 0;"></div>
+            <div class="row" style="justify-content:space-between;">
+              <span style="color:var(--accent)">Scaled ×4</span>
+              <span>2,448 kcal · $19.40</span>
+            </div>
+            <div class="dim-text" style="margin-top:6px;">≈ $4.85 / person</div>
+          </div>
+
+          <div class="panel">
+            <div class="label">Ingredient Scaling</div>
+            <div class="list-row"><span>Chicken thigh</span><span class="dim-text">6oz → 24oz</span></div>
+            <div class="list-row"><span>Broccoli</span><span class="dim-text">1 cup → 4 cups</span></div>
+            <div class="list-row"><span>Sesame oil</span><span class="dim-text">1 tbsp → 4 tbsp</span></div>
+          </div>
+
+          <div class="btn-primary">Add to Family Plan</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ========== WEB VIEWS ========== -->
+  <div data-view="web" style="display:none; width:100%;">
+
+    <!-- ONBOARDING / GOAL SETUP -->
+    <section class="screen" data-screen="onboarding" data-view-container="web">
+      <div class="web brackets">
+        <div class="web-top">
+          <div class="disp" style="font-size:16px;">SET YOUR OBJECTIVE</div>
+          <div class="dim-text">Step 1 of 3</div>
+        </div>
+        <div class="web-body">
+          <div class="web-main" style="flex:1;border-right:1px solid var(--line);">
+            <div class="label">Choose a Goal</div>
+            <div class="panel brackets" style="border-color:var(--accent);">
+              <div class="label" style="margin:0;">◈ Selected</div>
+              <div style="font-size:16px;margin-top:4px;">Build Muscle</div>
+              <div class="dim-text">Higher protein target, moderate surplus</div>
+            </div>
+            <div class="panel" style="opacity:.5;">
+              <div style="font-size:14px;">Lose Weight</div>
+              <div class="dim-text">Caloric deficit, protein preserved</div>
+            </div>
+            <div class="panel" style="opacity:.5;">
+              <div style="font-size:14px;">Gain Weight</div>
+              <div class="dim-text">Caloric surplus, higher energy density</div>
+            </div>
+            <div class="panel" style="opacity:.5;">
+              <div style="font-size:14px;">Maintain</div>
+              <div class="dim-text">Balanced macros at current weight</div>
+            </div>
+          </div>
+          <div class="web-main" style="flex:1;">
+            <div class="label">Your Stats</div>
+            <div class="grid2">
+              <div class="panel"><div class="dim-text" style="font-size:10px;">WEIGHT</div><div>178 lb</div></div>
+              <div class="panel"><div class="dim-text" style="font-size:10px;">HEIGHT</div><div>5'10"</div></div>
+              <div class="panel"><div class="dim-text" style="font-size:10px;">AGE</div><div>27</div></div>
+              <div class="panel"><div class="dim-text" style="font-size:10px;">ACTIVITY</div><div>Moderate</div></div>
+            </div>
+            <div class="panel">
+              <div class="label">Computed Targets</div>
+              <div style="font-size:20px;" class="disp">2,650 <span class="dim-text" style="font-size:12px;">kcal/day</span></div>
+              <div class="dim-text">190g protein · 280g carbs · 80g fat</div>
+            </div>
+            <div class="btn-primary">Continue →</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section class="screen active" data-screen="dashboard" data-view-container="web">
+      <div class="web brackets">
+        <div class="web-top">
+          <div class="disp" style="font-size:16px;letter-spacing:.12em;">MEALGRID</div>
+          <div class="row" style="gap:6px;">
+            <span class="chip on">Lean Bulk</span>
+            <span class="chip on">Serves 1</span>
+          </div>
+        </div>
+        <div class="web-body">
+          <div class="web-sidebar">
+            <div class="nav-item active">— Dashboard</div>
+            <div class="nav-item">— Recipes</div>
+            <div class="nav-item">— Pantry</div>
+            <div class="nav-item">— Meal Plan</div>
+            <div class="nav-item">— Import</div>
+          </div>
+          <div class="web-main">
+            <div class="grid3">
+              <div class="panel"><div class="label">Calories Today</div>
+                <div style="font-size:22px;" class="disp">1740<span class="dim-text" style="font-size:12px;">/2200</span></div>
+                <div class="bar" style="margin-top:8px;"><span style="width:79%"></span></div>
+              </div>
+              <div class="panel"><div class="label">Cost This Week</div>
+                <div style="font-size:22px;" class="disp">$41.20</div>
+                <div class="dim-text">budget $65</div>
+              </div>
+              <div class="panel"><div class="label">Pantry Coverage</div>
+                <div class="row" style="align-items:center;">
+                  <div class="ring" style="width:56px;height:56px;"></div>
+                  <div class="dim-text" style="margin-left:10px;">6/9 items on hand</div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="label">This Week's Plan</div>
+              <div class="list-row"><span>Mon — Overnight Oats + Berries</span><span class="dim-text">410 kcal · $1.10</span></div>
+              <div class="list-row"><span>Tue — Chicken Bowl (imported)</span><span class="dim-text">612 kcal · $3.20</span></div>
+              <div class="list-row"><span>Wed — Stir Fry</span><span style="color:var(--accent)">missing 2 items</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECIPE DETAIL -->
+    <section class="screen" data-screen="recipe" data-view-container="web">
+      <div class="web brackets">
+        <div class="web-top">
+          <div class="dim-text">← ALL RECIPES</div>
+          <div class="dim-text">imported via web · 2h ago</div>
+        </div>
+        <div class="web-body">
+          <div class="web-main" style="border-right:1px solid var(--line); flex:1.4;">
+            <div class="thumb" style="height:220px;">RECIPE IMAGE / SOURCE PREVIEW</div>
+            <div class="disp" style="font-size:20px;">GARLIC SESAME STIR FRY</div>
+            <div class="panel">
+              <div class="label">Ingredients · Pantry Match</div>
+              <div class="list-row"><span>Broccoli, 1 cup</span><span style="color:var(--accent)">IN PANTRY</span></div>
+              <div class="list-row"><span>Sesame oil, 1 tbsp</span><span style="color:var(--accent)">IN PANTRY</span></div>
+              <div class="list-row"><span>Chicken thigh, 6oz</span><span class="dim-text">NEEDED</span></div>
+              <div class="list-row"><span>Soy sauce, 2 tbsp</span><span class="dim-text">NEEDED</span></div>
+            </div>
+          </div>
+          <div class="web-main" style="flex:1;">
+            <div class="grid2">
+              <div class="panel" style="text-align:center;"><div class="label" style="margin:0;">Kcal</div><div style="font-size:18px;">612</div></div>
+              <div class="panel" style="text-align:center;"><div class="label" style="margin:0;">Cost</div><div style="font-size:18px;">$4.85</div></div>
+            </div>
+            <div class="panel">
+              <div class="label">Fit to Goal</div>
+              <div class="dim-text">Matches Lean Bulk target within 8%</div>
+              <div class="bar" style="margin-top:8px;"><span style="width:92%"></span></div>
+            </div>
+            <div class="panel">
+              <div class="label">Similar Recipes</div>
+              <div class="dim-text">Sesame Chicken Rice Bowl — $4.10 · 590 kcal</div>
+              <div class="dim-text">Broccoli Beef Stir Fry — $5.30 · 640 kcal</div>
+            </div>
+            <div class="btn-primary">Add to Plan</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANTRY -->
+    <section class="screen" data-screen="pantry" data-view-container="web">
+      <div class="web brackets">
+        <div class="web-top">
+          <div class="disp" style="font-size:16px;">DIGITAL PANTRY</div>
+          <div class="dim-text">23 items · 4 low stock</div>
+        </div>
+        <div class="web-body">
+          <div class="web-sidebar">
+            <div class="nav-item">All Items</div>
+            <div class="nav-item active">— Low Stock</div>
+            <div class="nav-item">— Produce</div>
+            <div class="nav-item">— Protein</div>
+            <div class="nav-item">— Pantry Staples</div>
+          </div>
+          <div class="web-main">
+            <div class="grid3">
+              <div class="panel"><div class="label">Chicken Breast</div><div class="dim-text">1.2 lb on hand</div></div>
+              <div class="panel"><div class="label">Brown Rice</div><div style="color:var(--accent)">low ◈</div></div>
+              <div class="panel"><div class="label">Broccoli</div><div class="dim-text">2 cups on hand</div></div>
+              <div class="panel"><div class="label">Sesame Oil</div><div class="dim-text">3/4 bottle</div></div>
+              <div class="panel"><div class="label">Greek Yogurt</div><div style="color:var(--accent)">low ◈</div></div>
+              <div class="panel" style="border-style:dashed;text-align:center;color:var(--dim);">+ Add Item</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IMPORT -->
+    <section class="screen" data-screen="import" data-view-container="web">
+      <div class="web brackets">
+        <div class="web-top">
+          <div class="disp" style="font-size:16px;">IMPORT RECIPE</div>
+          <div class="row" style="gap:6px;">
+            <span class="chip on">URL</span><span class="chip">Instagram</span><span class="chip">TikTok</span><span class="chip">Screenshot</span>
+          </div>
+        </div>
+        <div class="web-body">
+          <div class="web-main" style="flex:1.2;border-right:1px solid var(--line);">
+            <div class="panel" style="text-align:center;padding:40px;">
+              <div class="label" style="margin:0 0 10px;">Paste a Link</div>
+              <div class="dim-text">https://tiktok.com/@user/video/...</div>
+            </div>
+            <div class="dim-text">Supports recipe sites (schema.org), Instagram captions, TikTok links, and pasted screenshots.</div>
+          </div>
+          <div class="web-main" style="flex:1;">
+            <div class="label">Parsing Preview</div>
+            <div class="panel">
+              <div class="dim-text">Title: Garlic Sesame Stir Fry</div>
+              <div class="dim-text">6 ingredients detected</div>
+              <div class="dim-text">Cost est: $4.85 · 612 kcal</div>
+              <div class="bar" style="margin-top:10px;"><span style="width:70%"></span></div>
+            </div>
+            <div class="btn-primary">Confirm & Save</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GROUP SCALING -->
+    <section class="screen" data-screen="group" data-view-container="web">
+      <div class="web brackets">
+        <div class="web-top">
+          <div class="disp" style="font-size:16px;">PLANNING FOR</div>
+          <div class="row" style="gap:6px;">
+            <span class="chip">Just Me</span>
+            <span class="chip on">Family (4)</span>
+            <span class="chip">Custom</span>
+          </div>
+        </div>
+        <div class="web-body">
+          <div class="web-main" style="flex:1;border-right:1px solid var(--line);">
+            <div class="label">Household</div>
+            <div class="panel">
+              <div class="dim-text">2 adults · 2 kids (age 8, 11)</div>
+            </div>
+            <div class="label">Garlic Sesame Stir Fry</div>
+            <div class="panel">
+              <div class="row" style="justify-content:space-between;">
+                <span class="dim-text">Base (serves 1)</span>
+                <span>612 kcal · $4.85</span>
+              </div>
+              <div class="glow-line" style="margin:10px 0;"></div>
+              <div class="row" style="justify-content:space-between;">
+                <span style="color:var(--accent)">Scaled ×4</span>
+                <span style="font-size:16px;">2,448 kcal · $19.40</span>
+              </div>
+              <div class="dim-text" style="margin-top:6px;">≈ $4.85 / person · 612 kcal / person</div>
+            </div>
+          </div>
+          <div class="web-main" style="flex:1;">
+            <div class="label">Ingredient Scaling</div>
+            <div class="panel">
+              <div class="list-row"><span>Chicken thigh</span><span class="dim-text">6oz → 24oz</span></div>
+              <div class="list-row"><span>Broccoli</span><span class="dim-text">1 cup → 4 cups</span></div>
+              <div class="list-row"><span>Sesame oil</span><span class="dim-text">1 tbsp → 4 tbsp</span></div>
+              <div class="list-row"><span>Soy sauce</span><span class="dim-text">2 tbsp → 8 tbsp</span></div>
+            </div>
+            <div class="label">Pantry Impact</div>
+            <div class="panel">
+              <div class="dim-text">Scaling ×4 uses full sesame oil stock — replace after this meal.</div>
+            </div>
+            <div class="btn-primary">Add to Family Plan</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+</div>
+
+<script>
+  document.querySelectorAll('[data-theme-btn]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.body.setAttribute('data-theme', btn.dataset.themeBtn);
+      document.querySelectorAll('[data-theme-btn]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('[data-view-btn]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const view = btn.dataset.viewBtn;
+      document.querySelectorAll('[data-view-btn]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('[data-view]').forEach(el=>{
+        el.style.display = (el.dataset.view === view) ? 'block' : 'none';
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-screen-btn]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const screen = btn.dataset.screenBtn;
+      document.querySelectorAll('[data-screen-btn]').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.screen').forEach(el=>{
+        el.classList.toggle('active', el.dataset.screen === screen);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
