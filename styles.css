@@ -206,6 +206,8 @@ a:focus-visible, button:focus-visible{
   font-weight:700; box-shadow:0 0 18px var(--accent-glow);
 }
 .btn-primary:hover{ filter:brightness(1.1); box-shadow:0 0 26px var(--accent-glow); }
+.btn:disabled{ opacity:.45; cursor:not-allowed; box-shadow:none; }
+.btn-primary:disabled:hover{ filter:none; }
 .btn-ghost{ border-color:var(--accent); color:var(--accent); }
 .btn-ghost:hover{ background:rgba(77,239,255,.08); }
 
@@ -250,6 +252,16 @@ a:focus-visible, button:focus-visible{
 /* ---------- Interactive prototype ---------- */
 .form-help{ margin:-6px 0 14px; font-size:12px; }
 .form-grid{ display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:var(--gap-md); margin-bottom:var(--gap-md); }
+.schedule-help{ margin-top:4px; font-size:12px; }
+.schedule-fields{ display:grid; grid-template-columns:1.4fr 1fr; gap:var(--gap-md); }
+.schedule-fields option:disabled{ color:var(--dim); }
+.schedule-estimate{ min-height:1.6em; }
+.plan-edit{ flex-shrink:0; font-size:11px; }
+.plan-edit summary{ color:var(--accent); cursor:pointer; text-transform:uppercase; letter-spacing:.08em; }
+.plan-edit-form{ display:flex; align-items:flex-end; gap:8px; padding-top:8px; }
+.plan-edit-form .field{ width:112px; }
+.plan-edit-form .field input, .plan-edit-form .field select{ min-height:34px; padding:5px 7px; font-size:11px; }
+.plan-edit-form .btn{ padding:7px 10px; font-size:10px; }
 .field{ display:flex; flex-direction:column; gap:6px; min-width:0; }
 .field input, .field select{
   width:100%; min-height:42px; padding:9px 11px; border:1px solid var(--line);
@@ -292,10 +304,13 @@ a:focus-visible, button:focus-visible{
   .filter-link:hover{ border-left:none; border-bottom-color:var(--line); }
   .filter-link.is-active{ border-left:none; border-bottom-color:var(--accent); }
   .form-grid{ grid-template-columns:1fr 1fr; }
+  .schedule-fields{ grid-template-columns:1fr 1fr; }
+  .plan-edit-form{ flex-wrap:wrap; }
 }
 
 @media (max-width: 480px){
   .page-title{ font-size:17px; }
   .value-lg{ font-size:19px; }
   .panel{ padding:16px 18px; }
+  .list-row{ flex-wrap:wrap; gap:8px; }
 }

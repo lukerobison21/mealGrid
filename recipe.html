@@ -46,11 +46,11 @@
       <div class="stack">
         <div class="cols-2">
           <div class="panel panel-center">
-            <div class="label">Calories</div>
+            <div class="label">Calories / Serving</div>
             <div class="value-lg" style="font-size:18px;margin-top:6px;">612</div>
           </div>
           <div class="panel panel-center">
-            <div class="label">Cost</div>
+            <div class="label">Cost / Serving</div>
             <div id="recipe-cost" class="value-lg" style="font-size:18px;margin-top:6px;"></div>
           </div>
         </div>
@@ -67,10 +67,27 @@
           <div class="list-row"><span>Broccoli Beef Stir Fry</span><span class="dim">$5.30 · 640 kcal</span></div>
         </div>
 
-        <div class="row wrap">
-          <a class="btn btn-ghost" href="group.html">Scale for Group</a>
-          <button id="add-recipe-to-plan" class="btn btn-primary" type="button">Add to Plan</button>
-        </div>
+        <form id="schedule-form" class="panel panel-corners stack">
+          <div>
+            <div class="label">Schedule This Meal</div>
+            <p class="dim schedule-help">Choose an open day and the number of servings to plan.</p>
+          </div>
+          <div class="schedule-fields">
+            <label class="field">
+              <span class="label">Day</span>
+              <select id="schedule-day" name="day" required></select>
+            </label>
+            <label class="field">
+              <span class="label">Servings</span>
+              <input id="schedule-servings" name="servings" type="number" min="1" max="12" step="1" value="1" required>
+            </label>
+          </div>
+          <p id="schedule-estimate" class="dim" aria-live="polite"></p>
+          <div class="row wrap">
+            <a class="btn btn-ghost" href="group.html">Scale for Group</a>
+            <button id="add-recipe-to-plan" class="btn btn-primary" type="submit">Add to Plan</button>
+          </div>
+        </form>
         <p id="recipe-plan-status" class="dim" aria-live="polite"></p>
       </div>
 

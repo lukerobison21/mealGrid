@@ -114,6 +114,14 @@
     return recipe.ingredients.reduce((total, ingredient) => total + ingredient.quantity * ingredient.unitCost, 0);
   }
 
+  function servingsFor(entry) {
+    return Number.isInteger(entry.servings) && entry.servings > 0 ? entry.servings : 1;
+  }
+
+  function costForPlanEntry(recipe, entry) {
+    return recipeCost(recipe) * servingsFor(entry);
+  }
+
   function plannedRequirements() {
     const totals = new Map();
     for (const entry of state.plan) {
@@ -123,9 +131,9 @@
         const key = `${ingredient.name.toLowerCase()}|${ingredient.unit}`;
         const existing = totals.get(key);
         if (existing) {
-          existing.quantity += ingredient.quantity;
+          existing.quantity += ingredient.quantity * servingsFor(entry);
         } else {
-          totals.set(key, { ...ingredient });
+          totals.set(key, { ...ingredient, quantity: ingredient.quantity * servingsFor(entry) });
         }
       }
     }
@@ -154,7 +162,7 @@
     const coverage = requirements.length ? Math.round((covered / requirements.length) * 100) : 0;
     const weeklyCost = state.plan.reduce((total, entry) => {
       const recipe = recipeById(entry.recipeId);
-      return total + (recipe ? recipeCost(recipe) : 0);
+      return total + (recipe ? costForPlanEntry(recipe, entry) : 0);
     }, 0);
 
     document.querySelector('#weekly-cost').textContent = `$${weeklyCost.toFixed(2)}`;
@@ -172,19 +180,21 @@
     for (const entry of sortedPlan) {
       const recipe = recipeById(entry.recipeId);
       if (!recipe) continue;
+      const servings = servingsFor(entry);
       const missingCount = recipe.ingredients.filter((ingredient) => {
         const item = findPantryItem(ingredient.name, ingredient.unit);
-        return !item || item.quantity < ingredient.quantity;
+        return !item || item.quantity < ingredient.quantity * servings;
       }).length;
       const row = document.createElement('div');
       row.className = 'list-row';
       const description = document.createElement('span');
-      description.textContent = `${entry.day} — ${recipe.name} · ${recipe.calories} kcal`;
+      description.textContent =
+        `${entry.day} — ${recipe.name} · ${servings} ${servings === 1 ? 'serving' : 'servings'} · ${recipe.calories * servings} kcal`;
       const details = document.createElement('span');
       details.className = missingCount ? 'tag-needed' : 'dim';
       details.textContent = missingCount
-        ? `Missing ${missingCount} ${missingCount === 1 ? 'item' : 'items'} · $${recipeCost(recipe).toFixed(2)}`
-        : `$${recipeCost(recipe).toFixed(2)}`;
+        ? `Missing ${missingCount} ${missingCount === 1 ? 'item' : 'items'} · $${costForPlanEntry(recipe, entry).toFixed(2)}`
+        : `$${costForPlanEntry(recipe, entry).toFixed(2)}`;
       const remove = document.createElement('button');
       remove.className = 'btn btn-ghost btn-remove';
       remove.type = 'button';
@@ -195,7 +205,65 @@
         saveState();
         renderAll();
       });
-      row.append(description, details, remove);
+      const edit = document.createElement('details');
+      edit.className = 'plan-edit';
+      const editSummary = document.createElement('summary');
+      editSummary.textContent = 'Edit';
+      const editForm = document.createElement('form');
+      editForm.className = 'plan-edit-form';
+      const dayLabel = document.createElement('label');
+      dayLabel.className = 'field';
+      const dayLabelText = document.createElement('span');
+      dayLabelText.className = 'label';
+      dayLabelText.textContent = 'Day';
+      const daySelect = document.createElement('select');
+      daySelect.name = 'day';
+      daySelect.required = true;
+      populatePlanDays(daySelect, entry);
+      dayLabel.append(dayLabelText, daySelect);
+
+      const servingsLabel = document.createElement('label');
+      servingsLabel.className = 'field';
+      const servingsLabelText = document.createElement('span');
+      servingsLabelText.className = 'label';
+      servingsLabelText.textContent = 'Servings';
+      const servingsInput = document.createElement('input');
+      servingsInput.name = 'servings';
+      servingsInput.type = 'number';
+      servingsInput.min = '1';
+      servingsInput.max = '12';
+      servingsInput.step = '1';
+      servingsInput.value = String(servings);
+      servingsInput.required = true;
+      servingsLabel.append(servingsLabelText, servingsInput);
+
+      const saveChanges = document.createElement('button');
+      saveChanges.className = 'btn btn-primary';
+      saveChanges.type = 'submit';
+      saveChanges.textContent = 'Save';
+      editForm.append(dayLabel, servingsLabel, saveChanges);
+      edit.append(editSummary, editForm);
+      editForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const formData = new FormData(editForm);
+        const nextDay = String(formData.get('day'));
+        const nextServings = Number(formData.get('servings'));
+        const dayIsTaken = state.plan.some((candidate) => candidate !== entry && candidate.day === nextDay);
+        if (!DAYS.includes(nextDay) || dayIsTaken) {
+          showNotice('Choose a day that does not already have a planned meal.', true);
+          return;
+        }
+        if (!Number.isInteger(nextServings) || nextServings < 1 || nextServings > 12) {
+          showNotice('Choose between 1 and 12 servings.', true);
+          return;
+        }
+        entry.day = nextDay;
+        entry.servings = nextServings;
+        const saved = saveState();
+        renderAll();
+        if (saved) showNotice(`${recipe.name} updated for ${nextDay}.`);
+      });
+      row.append(description, details, edit, remove);
       planContainer.append(row);
     }
 
@@ -274,10 +342,12 @@
       container.append(row);
     }
     document.querySelector('#recipe-cost').textContent = `$${recipeCost(recipe).toFixed(2)}`;
-    const plannedCount = state.plan.filter((entry) => entry.recipeId === recipe.id).length;
-    document.querySelector('#recipe-plan-status').textContent = plannedCount
-      ? `Scheduled ${plannedCount} ${plannedCount === 1 ? 'time' : 'times'} this week.`
+    const scheduledEntries = state.plan.filter((entry) => entry.recipeId === recipe.id);
+    document.querySelector('#recipe-plan-status').textContent = scheduledEntries.length
+      ? `Scheduled ${scheduledEntries.map((entry) => `${entry.day} (${servingsFor(entry)} ${servingsFor(entry) === 1 ? 'serving' : 'servings'})`).join(', ')}.`
       : 'Not yet in this week’s plan.';
+    renderScheduleOptions();
+    renderScheduleEstimate();
   }
 
   function renderAll() {
@@ -329,27 +399,91 @@
     });
   }
 
-  function bindRecipeButton() {
-    const button = document.querySelector('#add-recipe-to-plan');
-    if (!button) return;
-    button.addEventListener('click', () => {
-      const usedDays = new Set(state.plan.map((entry) => entry.day));
-      const day = DAYS.find((candidate) => !usedDays.has(candidate));
-      if (!day) {
-        showNotice('Your weekly plan is full. Remove a meal from the dashboard to make room.', true);
+  function populatePlanDays(select, currentEntry = null) {
+    const scheduledByDay = new Map(
+      state.plan.filter((entry) => entry !== currentEntry)
+        .map((entry) => [entry.day, recipeById(entry.recipeId)?.name || 'Meal'])
+    );
+    select.replaceChildren();
+
+    if (!currentEntry) {
+      const prompt = document.createElement('option');
+      prompt.value = '';
+      prompt.textContent = 'Choose a day';
+      prompt.disabled = true;
+      prompt.selected = true;
+      select.append(prompt);
+    }
+
+    let availableDays = 0;
+    for (const day of DAYS) {
+      const isScheduled = scheduledByDay.has(day);
+      const option = document.createElement('option');
+      option.value = day;
+      option.disabled = isScheduled;
+      option.textContent = isScheduled ? `${day} — ${scheduledByDay.get(day)} (planned)` : day;
+      select.append(option);
+      if (!isScheduled) availableDays += 1;
+    }
+
+    select.value = currentEntry ? currentEntry.day : '';
+    return availableDays;
+  }
+
+  function renderScheduleOptions() {
+    const select = document.querySelector('#schedule-day');
+    const submit = document.querySelector('#add-recipe-to-plan');
+    if (!select || !submit) return;
+    const availableDays = populatePlanDays(select);
+    submit.disabled = availableDays === 0;
+    submit.textContent = availableDays ? 'Add to Plan' : 'Week Is Full';
+  }
+
+  function renderScheduleEstimate() {
+    const estimate = document.querySelector('#schedule-estimate');
+    const servingsInput = document.querySelector('#schedule-servings');
+    if (!estimate || !servingsInput) return;
+    const servings = Number(servingsInput.value);
+    const recipe = recipeById('sesame-stir-fry');
+    if (!Number.isInteger(servings) || servings < 1 || servings > 12) {
+      estimate.textContent = 'Choose between 1 and 12 servings.';
+      return;
+    }
+    estimate.textContent =
+      `${servings} ${servings === 1 ? 'serving' : 'servings'} · $${(recipeCost(recipe) * servings).toFixed(2)} estimated · ${recipe.calories * servings} kcal`;
+  }
+
+  function bindRecipeForm() {
+    const form = document.querySelector('#schedule-form');
+    if (!form) return;
+    const servingsInput = document.querySelector('#schedule-servings');
+    servingsInput.addEventListener('input', renderScheduleEstimate);
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const day = String(formData.get('day'));
+      const servings = Number(formData.get('servings'));
+      if (!DAYS.includes(day) || state.plan.some((entry) => entry.day === day)) {
+        showNotice('Choose an open day for this meal.', true);
+        renderScheduleOptions();
         return;
       }
-      state.plan.push({ day, recipeId: 'sesame-stir-fry' });
+      if (!Number.isInteger(servings) || servings < 1 || servings > 12) {
+        showNotice('Choose between 1 and 12 servings.', true);
+        return;
+      }
+      state.plan.push({ day, recipeId: 'sesame-stir-fry', servings });
       const saved = saveState();
+      form.reset();
       renderAll();
       if (saved) {
-        showNotice(`Garlic Sesame Stir Fry added to ${day}’s plan.`);
+        showNotice(`Garlic Sesame Stir Fry added to ${day}’s plan for ${servings} ${servings === 1 ? 'serving' : 'servings'}.`);
       }
     });
   }
 
   state = loadState();
   bindPantryForm();
-  bindRecipeButton();
+  bindRecipeForm();
   renderAll();
 })();
