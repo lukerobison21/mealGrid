@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MealGrid — Edit Recipe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="brand display">MEALGRID</div>
+    <div class="brand-sub">Meal Planning HUD</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="index.html">Dashboard</a></li>
+      <li><a class="nav-link" href="onboarding.html">Goal Setup</a></li>
+      <li><a class="nav-link" href="import.html">Import Recipe</a></li>
+      <li><a class="nav-link is-active" href="recipes.html" aria-current="page">Recipe Library</a></li>
+      <li><a class="nav-link" href="pantry.html">Pantry</a></li>
+      <li><a class="nav-link" href="group.html">Group Plan</a></li>
+    </ul>
+    <div class="sidebar-status"><span class="status-dot"></span>Pantry synced 4m ago</div>
+  </aside>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <a class="back-link" href="recipes.html">← All Recipes</a>
+        <h1 id="recipe-form-title" class="page-title display" style="margin-top:8px;">New Recipe</h1>
+      </div>
+      <div id="recipe-form-meta" class="page-meta">Quantities are for the whole batch.</div>
+    </div>
+
+    <div id="recipe-form-missing" class="panel panel-corners stack" hidden>
+      <div class="label">Recipe Not Found</div>
+      <p class="dim">This recipe may have been deleted.</p>
+      <div class="row wrap"><a class="btn btn-ghost" href="recipes.html">Back to Library</a></div>
+    </div>
+
+    <form id="recipe-form" class="stack" novalidate>
+
+      <div id="recipe-form-errors" class="panel form-errors" role="alert" tabindex="-1" hidden>
+        <div class="label">Please fix the following</div>
+        <ul></ul>
+      </div>
+
+      <div class="panel panel-corners">
+        <div class="label" style="margin-bottom:12px;">Basics</div>
+        <div class="recipe-basics-grid">
+          <label class="field field-wide">
+            <span class="label">Recipe name</span>
+            <input name="name" type="text" maxlength="60" required placeholder="e.g. Turkey Chili">
+          </label>
+          <label class="field">
+            <span class="label">Makes (servings)</span>
+            <input name="servings" type="number" min="1" max="24" step="1" value="1" required>
+          </label>
+          <label class="field">
+            <span class="label">Prep (min)</span>
+            <input name="prepMinutes" type="number" min="0" max="1440" step="1" placeholder="0">
+          </label>
+          <label class="field">
+            <span class="label">Cook (min)</span>
+            <input name="cookMinutes" type="number" min="0" max="1440" step="1" placeholder="0">
+          </label>
+          <label class="field">
+            <span class="label">Calories / serving (optional)</span>
+            <input name="calories" type="number" min="0" max="5000" step="1" placeholder="—">
+          </label>
+          <label class="field field-wide">
+            <span class="label">Tags (comma separated, optional)</span>
+            <input name="tags" type="text" maxlength="200" placeholder="e.g. dinner, high-protein">
+          </label>
+        </div>
+      </div>
+
+      <div class="panel panel-corners">
+        <div class="row-between" style="margin-bottom:12px;">
+          <div class="label">Ingredients</div>
+          <p id="recipe-form-estimate" class="dim" aria-live="polite"></p>
+        </div>
+        <p class="dim form-help">Use the same name and unit as your pantry so MealGrid can match what you have on hand. Leave a row blank to skip it.</p>
+        <div id="ingredient-rows" class="stack"></div>
+        <button id="add-ingredient" class="btn btn-ghost" type="button" style="margin-top:var(--gap-md);">+ Add Ingredient</button>
+      </div>
+
+      <div class="panel panel-corners">
+        <div class="label" style="margin-bottom:12px;">Steps</div>
+        <label class="field">
+          <span class="label">One step per line</span>
+          <textarea name="steps" rows="6" maxlength="4000" required placeholder="Preheat the oven to 400°F.&#10;Roast the vegetables for 20 minutes."></textarea>
+        </label>
+      </div>
+
+      <div class="row-between wrap">
+        <div class="row wrap">
+          <button class="btn btn-primary" type="submit">Save Recipe</button>
+          <a id="recipe-form-cancel" class="btn btn-ghost" href="recipes.html">Cancel</a>
+        </div>
+        <button id="recipe-form-delete" class="btn btn-danger" type="button" hidden>Delete Recipe</button>
+      </div>
+
+    </form>
+
+    <template id="ingredient-row-template">
+      <div class="ingredient-row">
+        <label class="field">
+          <span class="label">Ingredient</span>
+          <input name="ingredient-name" type="text" maxlength="60" placeholder="e.g. Broccoli">
+        </label>
+        <label class="field">
+          <span class="label">Qty</span>
+          <input name="ingredient-quantity" type="number" min="0" step="0.01" placeholder="0">
+        </label>
+        <label class="field">
+          <span class="label">Unit</span>
+          <select name="ingredient-unit"><option value="oz">oz</option><option value="lb">lb</option><option value="cup">cup</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option><option value="each">each</option></select>
+        </label>
+        <label class="field">
+          <span class="label">Cost / unit ($)</span>
+          <input name="ingredient-cost" type="number" min="0" step="0.01" placeholder="0.00">
+        </label>
+        <button class="btn btn-ghost btn-remove" type="button" data-remove-ingredient>Remove</button>
+      </div>
+    </template>
+
+  </main>
+
+</div>
+<div id="app-notice" class="app-notice" role="status" aria-live="polite" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

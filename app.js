@@ -427,10 +427,482 @@
     renderScheduleEstimate();
   }
 
+  /* ---------- Recipe library: shared helpers ---------- */
+
+  const UNITS = ['oz', 'lb', 'cup', 'tbsp', 'tsp', 'each'];
+  const RECIPE_LIMITS = {
+    nameLength: 60,
+    maxServings: 24,
+    maxMinutes: 1440,
+    maxCalories: 5000,
+    maxQuantity: 10000,
+    maxUnitCost: 1000,
+    maxIngredients: 30,
+    maxSteps: 30,
+    maxTags: 8,
+    tagLength: 20
+  };
+  const FLASH_KEY = 'mealgrid-flash';
+
+  function recipeUrl(recipe) {
+    return `recipe.html?id=${encodeURIComponent(recipe.id)}`;
+  }
+
+  function editRecipeUrl(recipe) {
+    return `recipe-edit.html?id=${encodeURIComponent(recipe.id)}`;
+  }
+
+  function totalMinutes(recipe) {
+    return (recipe.prepMinutes || 0) + (recipe.cookMinutes || 0);
+  }
+
+  function plannedDaysFor(recipe) {
+    return state.plan.filter((entry) => entry.recipeId === recipe.id).map((entry) => entry.day);
+  }
+
+  /** Queue a notice to show after the next page load (e.g. after a redirect). */
+  function flashNotice(message) {
+    try {
+      sessionStorage.setItem(FLASH_KEY, message);
+    } catch (error) {
+      console.warn('Could not queue MealGrid notice.', error);
+    }
+  }
+
+  function showFlashNotice() {
+    try {
+      const message = sessionStorage.getItem(FLASH_KEY);
+      if (!message) return;
+      sessionStorage.removeItem(FLASH_KEY);
+      showNotice(message);
+    } catch (error) {
+      console.warn('Could not read MealGrid notice.', error);
+    }
+  }
+
+  /**
+   * Ask for confirmation, then delete a recipe and any plan entries using it.
+   * Returns true when the recipe was deleted.
+   */
+  function deleteRecipe(recipe) {
+    const plannedDays = plannedDaysFor(recipe);
+    const planWarning = plannedDays.length
+      ? `\n\nIt is planned for ${plannedDays.join(', ')}; ${plannedDays.length === 1 ? 'that meal' : 'those meals'} will be removed from this week’s plan.`
+      : '';
+    if (!window.confirm(`Delete “${recipe.name}”? This cannot be undone.${planWarning}`)) return false;
+    state.recipes = state.recipes.filter((candidate) => candidate.id !== recipe.id);
+    state.plan = state.plan.filter((entry) => entry.recipeId !== recipe.id);
+    return saveState();
+  }
+
+  /* ---------- Recipe library page ---------- */
+
+  const libraryFilters = { query: '', tag: 'all' };
+
+  function recipeMatchesFilters(recipe) {
+    if (libraryFilters.tag === 'planned' && !plannedDaysFor(recipe).length) return false;
+    if (!['all', 'planned'].includes(libraryFilters.tag) && !recipe.tags.includes(libraryFilters.tag)) return false;
+    const query = libraryFilters.query.trim().toLowerCase();
+    if (!query) return true;
+    const haystack = [recipe.name, ...recipe.tags, ...recipe.ingredients.map((ingredient) => ingredient.name)];
+    return haystack.some((text) => text.toLowerCase().includes(query));
+  }
+
+  function renderLibraryFilters() {
+    const nav = document.querySelector('#library-filters');
+    const allTags = [...new Set(state.recipes.flatMap((recipe) => recipe.tags))].sort();
+    if (!['all', 'planned', ...allTags].includes(libraryFilters.tag)) libraryFilters.tag = 'all';
+    const filters = [
+      { value: 'all', label: 'All Recipes' },
+      { value: 'planned', label: 'In This Week’s Plan' },
+      ...allTags.map((tag) => ({ value: tag, label: `#${tag}` }))
+    ];
+    nav.replaceChildren();
+    for (const filter of filters) {
+      const button = document.createElement('button');
+      const isActive = filter.value === libraryFilters.tag;
+      button.className = `filter-link${isActive ? ' is-active' : ''}`;
+      button.type = 'button';
+      button.textContent = filter.label;
+      button.setAttribute('aria-pressed', String(isActive));
+      button.addEventListener('click', () => {
+        libraryFilters.tag = filter.value;
+        renderLibrary();
+      });
+      nav.append(button);
+    }
+  }
+
+  function createRecipeCard(recipe) {
+    const card = document.createElement('article');
+    card.className = 'panel panel-corners recipe-card';
+
+    const title = document.createElement('h2');
+    title.className = 'recipe-card-title display';
+    const titleLink = document.createElement('a');
+    titleLink.href = recipeUrl(recipe);
+    titleLink.textContent = recipe.name;
+    title.append(titleLink);
+
+    const stats = document.createElement('p');
+    stats.className = 'dim';
+    stats.textContent = [
+      `$${costPerServing(recipe).toFixed(2)} / serving`,
+      caloriesLabel(recipe),
+      totalMinutes(recipe) ? `${totalMinutes(recipe)} min` : ''
+    ].filter(Boolean).join(' · ');
+
+    const details = document.createElement('p');
+    details.className = 'dim';
+    details.textContent = `Makes ${recipeYield(recipe)} · ${pluralize(recipe.ingredients.length, 'ingredient')}`;
+
+    const tags = document.createElement('div');
+    tags.className = 'row wrap recipe-tags';
+    for (const tag of recipe.tags) {
+      const chip = document.createElement('span');
+      chip.className = 'chip chip-sm';
+      chip.textContent = tag;
+      tags.append(chip);
+    }
+
+    const plannedDays = plannedDaysFor(recipe);
+    const planned = document.createElement('p');
+    planned.className = plannedDays.length ? 'tag-ok' : 'tag-needed';
+    planned.textContent = plannedDays.length ? `Planned · ${plannedDays.join(', ')}` : 'Not planned';
+
+    const actions = document.createElement('div');
+    actions.className = 'row wrap recipe-card-actions';
+    const view = document.createElement('a');
+    view.className = 'btn btn-ghost btn-sm';
+    view.href = recipeUrl(recipe);
+    view.textContent = 'View';
+    const edit = document.createElement('a');
+    edit.className = 'btn btn-ghost btn-sm';
+    edit.href = editRecipeUrl(recipe);
+    edit.textContent = 'Edit';
+    const remove = document.createElement('button');
+    remove.className = 'btn btn-danger btn-sm';
+    remove.type = 'button';
+    remove.textContent = 'Delete';
+    remove.setAttribute('aria-label', `Delete ${recipe.name}`);
+    remove.addEventListener('click', () => {
+      if (!deleteRecipe(recipe)) return;
+      renderLibrary();
+      showNotice(`${recipe.name} deleted.`);
+    });
+    actions.append(view, edit, remove);
+
+    card.append(title, stats, details, tags, planned, actions);
+    return card;
+  }
+
+  function renderLibrary() {
+    const grid = document.querySelector('#recipe-grid');
+    if (!grid) return;
+    const plannedCount = state.recipes.filter((recipe) => plannedDaysFor(recipe).length).length;
+    document.querySelector('#library-summary').textContent =
+      `${pluralize(state.recipes.length, 'recipe')} · ${plannedCount} in this week’s plan`;
+    renderLibraryFilters();
+
+    const visibleRecipes = state.recipes
+      .filter(recipeMatchesFilters)
+      .sort((left, right) => left.name.localeCompare(right.name));
+    grid.replaceChildren(...visibleRecipes.map(createRecipeCard));
+    const empty = document.querySelector('#library-empty');
+    empty.hidden = visibleRecipes.length > 0;
+    empty.textContent = state.recipes.length
+      ? 'No recipes match this search or filter.'
+      : 'Your library is empty. Add a recipe to get started.';
+  }
+
+  function bindLibrary() {
+    const search = document.querySelector('#library-search');
+    if (!search) return;
+    search.addEventListener('input', () => {
+      libraryFilters.query = search.value;
+      renderLibrary();
+    });
+  }
+
+  /* ---------- Recipe editor: validation ---------- */
+
+  function parseOptionalNumber(raw) {
+    const text = String(raw ?? '').trim();
+    return text === '' ? null : Number(text);
+  }
+
+  function isIntegerInRange(value, min, max) {
+    return Number.isInteger(value) && value >= min && value <= max;
+  }
+
+  function parseTags(raw) {
+    const tags = String(raw ?? '')
+      .split(',')
+      .map((tag) => tag.trim().toLowerCase().replace(/\s+/g, '-'))
+      .filter(Boolean);
+    return [...new Set(tags)];
+  }
+
+  /**
+   * Validate raw form values. Returns `{ recipe, errors }`; `recipe` holds the
+   * cleaned values and `errors` is a list of `{ field, message }` where
+   * `field` is an input name or `ingredient-<index>-<input name>`.
+   */
+  function validateRecipeDraft(draft, existingId = null) {
+    const errors = [];
+    const addError = (field, message) => errors.push({ field, message });
+    const limits = RECIPE_LIMITS;
+
+    const name = String(draft.name ?? '').trim();
+    if (!name) {
+      addError('name', 'Enter a recipe name.');
+    } else if (name.length > limits.nameLength) {
+      addError('name', `Keep the recipe name to ${limits.nameLength} characters or fewer.`);
+    } else if (state.recipes.some((recipe) => recipe.id !== existingId && recipe.name.toLowerCase() === name.toLowerCase())) {
+      addError('name', 'A recipe with this name already exists.');
+    }
+
+    const servings = parseOptionalNumber(draft.servings);
+    if (!isIntegerInRange(servings, 1, limits.maxServings)) {
+      addError('servings', `Servings must be a whole number from 1 to ${limits.maxServings}.`);
+    }
+
+    const prepMinutes = parseOptionalNumber(draft.prepMinutes) ?? 0;
+    if (!isIntegerInRange(prepMinutes, 0, limits.maxMinutes)) {
+      addError('prepMinutes', `Prep time must be a whole number of minutes from 0 to ${limits.maxMinutes}.`);
+    }
+    const cookMinutes = parseOptionalNumber(draft.cookMinutes) ?? 0;
+    if (!isIntegerInRange(cookMinutes, 0, limits.maxMinutes)) {
+      addError('cookMinutes', `Cook time must be a whole number of minutes from 0 to ${limits.maxMinutes}.`);
+    }
+
+    const calories = parseOptionalNumber(draft.calories);
+    if (calories !== null && !isIntegerInRange(calories, 0, limits.maxCalories)) {
+      addError('calories', `Calories must be a whole number from 0 to ${limits.maxCalories}, or left blank.`);
+    }
+
+    const tags = parseTags(draft.tags);
+    if (tags.length > limits.maxTags) {
+      addError('tags', `Use ${limits.maxTags} tags or fewer.`);
+    } else if (tags.some((tag) => tag.length > limits.tagLength)) {
+      addError('tags', `Keep each tag to ${limits.tagLength} characters or fewer.`);
+    }
+
+    const ingredients = [];
+    draft.ingredients.forEach((row, index) => {
+      const rowName = String(row.name ?? '').trim();
+      const rowIsBlank = !rowName && String(row.quantity ?? '').trim() === '' && String(row.unitCost ?? '').trim() === '';
+      if (rowIsBlank) return;
+      const label = rowName || `Ingredient ${index + 1}`;
+      const quantity = parseOptionalNumber(row.quantity);
+      const unitCost = parseOptionalNumber(row.unitCost) ?? 0;
+      if (!rowName) addError(`ingredient-${index}-ingredient-name`, `Ingredient ${index + 1} needs a name.`);
+      if (!Number.isFinite(quantity) || quantity <= 0 || quantity > limits.maxQuantity) {
+        addError(`ingredient-${index}-ingredient-quantity`, `${label}: enter a quantity greater than 0.`);
+      }
+      if (!UNITS.includes(row.unit)) {
+        addError(`ingredient-${index}-ingredient-unit`, `${label}: choose a unit.`);
+      }
+      if (!Number.isFinite(unitCost) || unitCost < 0 || unitCost > limits.maxUnitCost) {
+        addError(`ingredient-${index}-ingredient-cost`, `${label}: cost per unit must be between $0 and $${limits.maxUnitCost}.`);
+      }
+      ingredients.push({ name: rowName, quantity, unit: row.unit, unitCost });
+    });
+    if (!ingredients.length) {
+      addError('ingredient-0-ingredient-name', 'Add at least one ingredient.');
+    } else if (ingredients.length > limits.maxIngredients) {
+      addError('ingredients', `Use ${limits.maxIngredients} ingredients or fewer.`);
+    }
+
+    const steps = String(draft.steps ?? '').split('\n').map((step) => step.trim()).filter(Boolean);
+    if (!steps.length) {
+      addError('steps', 'Add at least one step.');
+    } else if (steps.length > limits.maxSteps) {
+      addError('steps', `Use ${limits.maxSteps} steps or fewer.`);
+    }
+
+    return {
+      errors,
+      recipe: { name, servings, prepMinutes, cookMinutes, calories, tags, ingredients, steps }
+    };
+  }
+
+  function slugify(text) {
+    const slug = text.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return slug || 'recipe';
+  }
+
+  /** Build a readable, unique id such as `turkey-chili` or `turkey-chili-2`. */
+  function uniqueRecipeId(name) {
+    const base = slugify(name);
+    let id = base;
+    for (let suffix = 2; recipeById(id); suffix += 1) id = `${base}-${suffix}`;
+    return id;
+  }
+
+  /* ---------- Recipe editor: form ---------- */
+
+  function addIngredientRow(ingredient = null) {
+    const rows = document.querySelector('#ingredient-rows');
+    const template = document.querySelector('#ingredient-row-template');
+    const row = template.content.firstElementChild.cloneNode(true);
+    if (ingredient) {
+      row.querySelector('[name="ingredient-name"]').value = ingredient.name;
+      row.querySelector('[name="ingredient-quantity"]').value = String(ingredient.quantity);
+      row.querySelector('[name="ingredient-unit"]').value = ingredient.unit;
+      row.querySelector('[name="ingredient-cost"]').value = String(ingredient.unitCost);
+    }
+    row.querySelector('[data-remove-ingredient]').addEventListener('click', () => {
+      row.remove();
+      if (!rows.children.length) addIngredientRow();
+      updateIngredientRows();
+    });
+    rows.append(row);
+    updateIngredientRows();
+    return row;
+  }
+
+  /** Keep remove-button labels and the add button in sync with the row count. */
+  function updateIngredientRows() {
+    const rows = [...document.querySelectorAll('#ingredient-rows .ingredient-row')];
+    rows.forEach((row, index) => {
+      row.querySelector('[data-remove-ingredient]').setAttribute('aria-label', `Remove ingredient ${index + 1}`);
+    });
+    const addButton = document.querySelector('#add-ingredient');
+    addButton.disabled = rows.length >= RECIPE_LIMITS.maxIngredients;
+    renderRecipeFormEstimate();
+  }
+
+  function readRecipeForm(form) {
+    const formData = new FormData(form);
+    const rows = [...form.querySelectorAll('#ingredient-rows .ingredient-row')];
+    return {
+      name: formData.get('name'),
+      servings: formData.get('servings'),
+      prepMinutes: formData.get('prepMinutes'),
+      cookMinutes: formData.get('cookMinutes'),
+      calories: formData.get('calories'),
+      tags: formData.get('tags'),
+      steps: formData.get('steps'),
+      ingredients: rows.map((row) => ({
+        name: row.querySelector('[name="ingredient-name"]').value,
+        quantity: row.querySelector('[name="ingredient-quantity"]').value,
+        unit: row.querySelector('[name="ingredient-unit"]').value,
+        unitCost: row.querySelector('[name="ingredient-cost"]').value
+      }))
+    };
+  }
+
+  function fillRecipeForm(form, recipe) {
+    form.elements.name.value = recipe.name;
+    form.elements.servings.value = String(recipeYield(recipe));
+    form.elements.prepMinutes.value = recipe.prepMinutes ? String(recipe.prepMinutes) : '';
+    form.elements.cookMinutes.value = recipe.cookMinutes ? String(recipe.cookMinutes) : '';
+    form.elements.calories.value = Number.isFinite(recipe.calories) ? String(recipe.calories) : '';
+    form.elements.tags.value = recipe.tags.join(', ');
+    form.elements.steps.value = recipe.steps.join('\n');
+    recipe.ingredients.forEach((ingredient) => addIngredientRow(ingredient));
+  }
+
+  function inputForField(form, field) {
+    const match = /^ingredient-(\d+)-(.+)$/.exec(field);
+    if (!match) return form.elements[field] instanceof Element ? form.elements[field] : null;
+    const row = form.querySelectorAll('#ingredient-rows .ingredient-row')[Number(match[1])];
+    return row ? row.querySelector(`[name="${match[2]}"]`) : null;
+  }
+
+  function showRecipeFormErrors(form, errors) {
+    const summary = document.querySelector('#recipe-form-errors');
+    form.querySelectorAll('[aria-invalid="true"]').forEach((input) => input.removeAttribute('aria-invalid'));
+    summary.hidden = errors.length === 0;
+    const list = summary.querySelector('ul');
+    list.replaceChildren();
+    for (const error of errors) {
+      const item = document.createElement('li');
+      item.textContent = error.message;
+      list.append(item);
+      inputForField(form, error.field)?.setAttribute('aria-invalid', 'true');
+    }
+    if (errors.length) {
+      summary.focus();
+      summary.scrollIntoView({ block: 'start' });
+    }
+  }
+
+  function renderRecipeFormEstimate() {
+    const estimate = document.querySelector('#recipe-form-estimate');
+    const form = document.querySelector('#recipe-form');
+    if (!estimate || !form) return;
+    const draft = readRecipeForm(form);
+    const total = draft.ingredients.reduce((sum, row) => {
+      const quantity = Number(row.quantity);
+      const unitCost = Number(row.unitCost);
+      return Number.isFinite(quantity) && Number.isFinite(unitCost) ? sum + quantity * unitCost : sum;
+    }, 0);
+    const servings = Number(draft.servings);
+    const perServing = isIntegerInRange(servings, 1, RECIPE_LIMITS.maxServings) ? total / servings : total;
+    estimate.textContent = `Est. $${total.toFixed(2)} total · $${perServing.toFixed(2)} / serving`;
+  }
+
+  function bindRecipeEditor() {
+    const form = document.querySelector('#recipe-form');
+    if (!form) return;
+    const recipeId = new URLSearchParams(window.location.search).get('id');
+    const existing = recipeId ? recipeById(recipeId) : null;
+
+    if (recipeId && !existing) {
+      form.hidden = true;
+      document.querySelector('#recipe-form-missing').hidden = false;
+      document.querySelector('#recipe-form-title').textContent = 'Recipe Not Found';
+      return;
+    }
+
+    if (existing) {
+      document.title = `MealGrid — Edit ${existing.name}`;
+      document.querySelector('#recipe-form-title').textContent = `Edit ${existing.name}`;
+      document.querySelector('#recipe-form-cancel').href = recipeUrl(existing);
+      fillRecipeForm(form, existing);
+      const deleteButton = document.querySelector('#recipe-form-delete');
+      deleteButton.hidden = false;
+      deleteButton.addEventListener('click', () => {
+        if (!deleteRecipe(existing)) return;
+        flashNotice(`${existing.name} deleted.`);
+        window.location.href = 'recipes.html';
+      });
+    } else {
+      document.title = 'MealGrid — New Recipe';
+      addIngredientRow();
+    }
+
+    document.querySelector('#add-ingredient').addEventListener('click', () => {
+      addIngredientRow().querySelector('input').focus();
+    });
+    form.addEventListener('input', renderRecipeFormEstimate);
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const { recipe, errors } = validateRecipeDraft(readRecipeForm(form), existing?.id ?? null);
+      showRecipeFormErrors(form, errors);
+      if (errors.length) return;
+      let saved;
+      if (existing) {
+        Object.assign(existing, recipe);
+        saved = existing;
+      } else {
+        saved = { id: uniqueRecipeId(recipe.name), ...recipe };
+        state.recipes.push(saved);
+      }
+      if (!saveState()) return;
+      flashNotice(`${saved.name} saved to your library.`);
+      window.location.href = recipeUrl(saved);
+    });
+  }
+
   function renderAll() {
     renderDashboard();
     renderPantry();
     renderRecipe();
+    renderLibrary();
   }
 
   function bindPantryForm() {
@@ -563,5 +1035,8 @@
   if (needsMigrationSave) saveState();
   bindPantryForm();
   bindRecipeForm();
+  bindLibrary();
+  bindRecipeEditor();
   renderAll();
+  showFlashNotice();
 })();
