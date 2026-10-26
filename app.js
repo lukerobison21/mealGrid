@@ -3,49 +3,87 @@
   const WEEK_BUDGET = 65;
   const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  const recipes = [
+  // Each recipe lists ingredient quantities for the whole batch (`servings`
+  // portions). Calories and costs shown in the UI are per serving.
+  const sampleRecipes = [
     {
       id: 'overnight-oats',
       name: 'Overnight Oats + Berries',
+      servings: 1,
+      prepMinutes: 5,
+      cookMinutes: 0,
       calories: 410,
+      tags: ['breakfast', 'vegetarian', 'make-ahead'],
       ingredients: [
         { name: 'Rolled Oats', quantity: 1, unit: 'cup', unitCost: 0.25 },
         { name: 'Berries', quantity: 0.5, unit: 'cup', unitCost: 1.6 }
+      ],
+      steps: [
+        'Stir the oats with an equal amount of milk or water in a jar.',
+        'Cover and refrigerate overnight.',
+        'Top with berries before serving.'
       ]
     },
     {
       id: 'chicken-bowl',
       name: 'Chicken Bowl',
+      servings: 1,
+      prepMinutes: 10,
+      cookMinutes: 25,
       calories: 612,
+      tags: ['high-protein', 'meal-prep'],
       ingredients: [
         { name: 'Chicken Breast', quantity: 6, unit: 'oz', unitCost: 0.4 },
         { name: 'Brown Rice', quantity: 0.5, unit: 'cup', unitCost: 0.5 },
         { name: 'Broccoli', quantity: 0.5, unit: 'cup', unitCost: 0.5 }
+      ],
+      steps: [
+        'Cook the brown rice according to the package.',
+        'Season and pan-sear the chicken until cooked through, then slice.',
+        'Steam the broccoli and assemble everything in a bowl.'
       ]
     },
     {
       id: 'sesame-stir-fry',
       name: 'Garlic Sesame Stir Fry',
+      servings: 1,
+      prepMinutes: 10,
+      cookMinutes: 15,
       calories: 612,
+      tags: ['dinner', 'high-protein', 'quick'],
       ingredients: [
         { name: 'Broccoli', quantity: 1, unit: 'cup', unitCost: 0.5 },
         { name: 'Sesame Oil', quantity: 1, unit: 'tbsp', unitCost: 0.3 },
         { name: 'Chicken Thigh', quantity: 6, unit: 'oz', unitCost: 0.5 },
         { name: 'Soy Sauce', quantity: 2, unit: 'tbsp', unitCost: 0.1 }
+      ],
+      steps: [
+        'Slice the chicken thigh into bite-sized strips.',
+        'Heat the sesame oil in a wok and sear the chicken until browned.',
+        'Add the broccoli and soy sauce and stir fry until tender-crisp.'
       ]
     },
     {
       id: 'yogurt-bowl',
       name: 'Greek Yogurt Bowl',
+      servings: 1,
+      prepMinutes: 5,
+      cookMinutes: 0,
       calories: 320,
+      tags: ['breakfast', 'vegetarian', 'quick'],
       ingredients: [
         { name: 'Greek Yogurt', quantity: 1, unit: 'cup', unitCost: 0.9 },
         { name: 'Berries', quantity: 0.5, unit: 'cup', unitCost: 1.6 }
+      ],
+      steps: [
+        'Spoon the yogurt into a bowl.',
+        'Top with berries and serve.'
       ]
     }
   ];
 
   const initialState = {
+    recipes: sampleRecipes,
     pantry: [
       { name: 'Chicken Breast', quantity: 24, unit: 'oz', category: 'Protein' },
       { name: 'Brown Rice', quantity: 2, unit: 'cup', category: 'Pantry Staples' },
@@ -64,6 +102,7 @@
 
   const notice = document.querySelector('#app-notice');
   let state;
+  let needsMigrationSave = false;
 
   function showNotice(message, isError = false) {
     if (!notice) return;
@@ -82,6 +121,14 @@
       const parsed = JSON.parse(stored);
       if (!parsed || !Array.isArray(parsed.pantry) || !Array.isArray(parsed.plan)) {
         throw new Error('Saved MealGrid data has an unexpected format.');
+      }
+      if (parsed.recipes === undefined) {
+        // Data saved before the recipe library existed: seed the sample recipes
+        // so existing plan entries keep pointing at the same recipe ids.
+        parsed.recipes = structuredClone(sampleRecipes);
+        needsMigrationSave = true;
+      } else if (!Array.isArray(parsed.recipes)) {
+        throw new Error('Saved MealGrid recipes have an unexpected format.');
       }
       return parsed;
     } catch (error) {
@@ -103,23 +150,52 @@
   }
 
   function recipeById(id) {
-    return recipes.find((recipe) => recipe.id === id);
+    return state.recipes.find((recipe) => recipe.id === id);
   }
 
   function findPantryItem(name, unit) {
     return state.pantry.find((item) => item.name.toLowerCase() === name.toLowerCase() && item.unit === unit);
   }
 
+  function isPositiveInteger(value) {
+    return Number.isInteger(value) && value > 0;
+  }
+
+  /** Number of servings the recipe's ingredient list makes. */
+  function recipeYield(recipe) {
+    return isPositiveInteger(recipe.servings) ? recipe.servings : 1;
+  }
+
+  /** Quantity of one ingredient needed for a single serving. */
+  function perServingQuantity(recipe, ingredient) {
+    return ingredient.quantity / recipeYield(recipe);
+  }
+
+  /** Estimated cost of the whole batch. */
   function recipeCost(recipe) {
     return recipe.ingredients.reduce((total, ingredient) => total + ingredient.quantity * ingredient.unitCost, 0);
   }
 
+  function costPerServing(recipe) {
+    return recipeCost(recipe) / recipeYield(recipe);
+  }
+
+  /** Servings planned for a plan entry (defaults to 1 for older saved data). */
   function servingsFor(entry) {
-    return Number.isInteger(entry.servings) && entry.servings > 0 ? entry.servings : 1;
+    return isPositiveInteger(entry.servings) ? entry.servings : 1;
   }
 
   function costForPlanEntry(recipe, entry) {
-    return recipeCost(recipe) * servingsFor(entry);
+    return costPerServing(recipe) * servingsFor(entry);
+  }
+
+  function pluralize(count, singular, plural = `${singular}s`) {
+    return `${count} ${count === 1 ? singular : plural}`;
+  }
+
+  /** "612 kcal" for the given servings, or an empty string when calories are unknown. */
+  function caloriesLabel(recipe, servings = 1) {
+    return Number.isFinite(recipe.calories) ? `${Math.round(recipe.calories * servings)} kcal` : '';
   }
 
   function plannedRequirements() {
@@ -129,11 +205,12 @@
       if (!recipe) continue;
       for (const ingredient of recipe.ingredients) {
         const key = `${ingredient.name.toLowerCase()}|${ingredient.unit}`;
+        const needed = perServingQuantity(recipe, ingredient) * servingsFor(entry);
         const existing = totals.get(key);
         if (existing) {
-          existing.quantity += ingredient.quantity * servingsFor(entry);
+          existing.quantity += needed;
         } else {
-          totals.set(key, { ...ingredient, quantity: ingredient.quantity * servingsFor(entry) });
+          totals.set(key, { ...ingredient, quantity: needed });
         }
       }
     }
@@ -183,13 +260,13 @@
       const servings = servingsFor(entry);
       const missingCount = recipe.ingredients.filter((ingredient) => {
         const item = findPantryItem(ingredient.name, ingredient.unit);
-        return !item || item.quantity < ingredient.quantity * servings;
+        return !item || item.quantity < perServingQuantity(recipe, ingredient) * servings;
       }).length;
       const row = document.createElement('div');
       row.className = 'list-row';
       const description = document.createElement('span');
-      description.textContent =
-        `${entry.day} — ${recipe.name} · ${servings} ${servings === 1 ? 'serving' : 'servings'} · ${recipe.calories * servings} kcal`;
+      description.textContent = [`${entry.day} — ${recipe.name}`, pluralize(servings, 'serving'), caloriesLabel(recipe, servings)]
+        .filter(Boolean).join(' · ');
       const details = document.createElement('span');
       details.className = missingCount ? 'tag-needed' : 'dim';
       details.textContent = missingCount
@@ -341,7 +418,7 @@
       row.append(name, status);
       container.append(row);
     }
-    document.querySelector('#recipe-cost').textContent = `$${recipeCost(recipe).toFixed(2)}`;
+    document.querySelector('#recipe-cost').textContent = `$${costPerServing(recipe).toFixed(2)}`;
     const scheduledEntries = state.plan.filter((entry) => entry.recipeId === recipe.id);
     document.querySelector('#recipe-plan-status').textContent = scheduledEntries.length
       ? `Scheduled ${scheduledEntries.map((entry) => `${entry.day} (${servingsFor(entry)} ${servingsFor(entry) === 1 ? 'serving' : 'servings'})`).join(', ')}.`
@@ -449,8 +526,8 @@
       estimate.textContent = 'Choose between 1 and 12 servings.';
       return;
     }
-    estimate.textContent =
-      `${servings} ${servings === 1 ? 'serving' : 'servings'} · $${(recipeCost(recipe) * servings).toFixed(2)} estimated · ${recipe.calories * servings} kcal`;
+    estimate.textContent = [pluralize(servings, 'serving'), `$${(costPerServing(recipe) * servings).toFixed(2)} estimated`, caloriesLabel(recipe, servings)]
+      .filter(Boolean).join(' · ');
   }
 
   function bindRecipeForm() {
@@ -483,6 +560,7 @@
   }
 
   state = loadState();
+  if (needsMigrationSave) saveState();
   bindPantryForm();
   bindRecipeForm();
   renderAll();
