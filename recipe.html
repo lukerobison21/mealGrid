@@ -18,7 +18,7 @@
       <li><a class="nav-link" href="index.html">Dashboard</a></li>
       <li><a class="nav-link" href="onboarding.html">Goal Setup</a></li>
       <li><a class="nav-link" href="import.html">Import Recipe</a></li>
-      <li><a class="nav-link is-active" href="recipe.html">Recipe Detail</a></li>
+      <li><a class="nav-link is-active" href="recipes.html">Recipe Library</a></li>
       <li><a class="nav-link" href="pantry.html">Pantry</a></li>
       <li><a class="nav-link" href="group.html">Group Plan</a></li>
     </ul>
@@ -28,18 +28,36 @@
   <main class="main">
 
     <div class="page-header">
-      <a class="back-link" href="import.html">← All Recipes</a>
-      <div class="page-meta">Imported via web · 2 hours ago</div>
+      <a class="back-link" href="recipes.html">← All Recipes</a>
+      <div class="row wrap" style="align-items:center;">
+        <span id="recipe-meta" class="page-meta"></span>
+        <a id="recipe-edit-link" class="btn btn-ghost btn-sm" href="recipe-edit.html">Edit</a>
+        <button id="recipe-delete" class="btn btn-danger btn-sm" type="button">Delete</button>
+      </div>
     </div>
 
-    <div class="split">
+    <div id="recipe-missing" class="panel panel-corners stack" hidden>
+      <div class="label">Recipe Not Found</div>
+      <p class="dim">This recipe may have been deleted, or the link is out of date.</p>
+      <div class="row wrap">
+        <a class="btn btn-ghost" href="recipes.html">Back to Library</a>
+        <a class="btn btn-primary" href="recipe-edit.html">+ New Recipe</a>
+      </div>
+    </div>
+
+    <div id="recipe-view" class="split">
 
       <div class="stack">
         <div class="thumb thumb-lg">Recipe Image / Source Preview</div>
-        <h1 class="page-title display">Garlic Sesame Stir Fry</h1>
+        <h1 id="recipe-name" class="page-title display"></h1>
+        <div id="recipe-tags" class="row wrap recipe-tags"></div>
         <div class="panel panel-corners">
-          <div class="label" style="margin-bottom:8px;">Ingredients · Pantry Match</div>
+          <div id="recipe-ingredients-label" class="label" style="margin-bottom:8px;">Ingredients · Pantry Match</div>
           <div id="recipe-ingredients"></div>
+        </div>
+        <div class="panel panel-corners">
+          <div class="label" style="margin-bottom:12px;">Steps</div>
+          <ol id="recipe-steps" class="recipe-steps"></ol>
         </div>
       </div>
 
@@ -47,7 +65,7 @@
         <div class="cols-2">
           <div class="panel panel-center">
             <div class="label">Calories / Serving</div>
-            <div class="value-lg" style="font-size:18px;margin-top:6px;">612</div>
+            <div id="recipe-calories" class="value-lg" style="font-size:18px;margin-top:6px;"></div>
           </div>
           <div class="panel panel-center">
             <div class="label">Cost / Serving</div>
@@ -63,8 +81,7 @@
 
         <div class="panel">
           <div class="label" style="margin-bottom:8px;">Similar Recipes</div>
-          <div class="list-row"><span>Sesame Chicken Rice Bowl</span><span class="dim">$4.10 · 590 kcal</span></div>
-          <div class="list-row"><span>Broccoli Beef Stir Fry</span><span class="dim">$5.30 · 640 kcal</span></div>
+          <div id="similar-recipes"></div>
         </div>
 
         <form id="schedule-form" class="panel panel-corners stack">

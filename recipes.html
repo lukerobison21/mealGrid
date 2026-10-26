@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MealGrid — Recipe Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="brand display">MEALGRID</div>
+    <div class="brand-sub">Meal Planning HUD</div>
+    <ul class="nav-list">
+      <li><a class="nav-link" href="index.html">Dashboard</a></li>
+      <li><a class="nav-link" href="onboarding.html">Goal Setup</a></li>
+      <li><a class="nav-link" href="import.html">Import Recipe</a></li>
+      <li><a class="nav-link is-active" href="recipes.html" aria-current="page">Recipe Library</a></li>
+      <li><a class="nav-link" href="pantry.html">Pantry</a></li>
+      <li><a class="nav-link" href="group.html">Group Plan</a></li>
+    </ul>
+    <div class="sidebar-status"><span class="status-dot"></span>Pantry synced 4m ago</div>
+  </aside>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <span class="eyebrow">Your Recipes</span>
+        <h1 class="page-title display">Recipe Library</h1>
+      </div>
+      <div class="row wrap" style="align-items:center;">
+        <span id="library-summary" class="page-meta"></span>
+        <a class="btn btn-primary" href="recipe-edit.html">+ New Recipe</a>
+      </div>
+    </div>
+
+    <label class="field library-search">
+      <span class="label">Search</span>
+      <input id="library-search" type="search" maxlength="60" placeholder="Name, ingredient, or tag" autocomplete="off">
+    </label>
+
+    <div class="split-narrow">
+
+      <nav id="library-filters" class="filter-list" aria-label="Filter recipes"></nav>
+
+      <div class="stack">
+        <div id="recipe-grid" class="cols-3"></div>
+        <p id="library-empty" class="dim" hidden>No recipes match this search or filter.</p>
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+<div id="app-notice" class="app-notice" role="status" aria-live="polite" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
