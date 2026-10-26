@@ -243,7 +243,7 @@ a:focus-visible, button:focus-visible{
   display:block; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
   text-decoration:none; text-align:left; color:var(--dim); background:transparent;
   font-family:var(--font-body); cursor:pointer;
-  padding:10px 12px; border-left:2px solid transparent;
+  padding:10px 12px; border:none; border-left:2px solid transparent;
   transition:color .15s ease, border-color .15s ease, background-color .15s ease;
 }
 .filter-link:hover{ color:var(--text); border-left-color:var(--line); }
