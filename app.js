@@ -265,8 +265,14 @@
       const row = document.createElement('div');
       row.className = 'list-row';
       const description = document.createElement('span');
-      description.textContent = [`${entry.day} — ${recipe.name}`, pluralize(servings, 'serving'), caloriesLabel(recipe, servings)]
-        .filter(Boolean).join(' · ');
+      const recipeLink = document.createElement('a');
+      recipeLink.href = recipeUrl(recipe);
+      recipeLink.textContent = recipe.name;
+      description.append(
+        `${entry.day} — `,
+        recipeLink,
+        [pluralize(servings, 'serving'), caloriesLabel(recipe, servings)].filter(Boolean).map((part) => ` · ${part}`).join('')
+      );
       const details = document.createElement('span');
       details.className = missingCount ? 'tag-needed' : 'dim';
       details.textContent = missingCount
@@ -398,10 +404,60 @@
     }
   }
 
+  /** The recipe shown on recipe.html: `?id=` if given, otherwise the first recipe. */
+  function recipeFromUrl() {
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (id === null) return state.recipes[0] ?? null;
+    return recipeById(id) ?? null;
+  }
+
+  function similarRecipes(recipe, limit = 2) {
+    return state.recipes
+      .filter((candidate) => candidate.id !== recipe.id)
+      .map((candidate) => ({
+        recipe: candidate,
+        sharedTags: candidate.tags.filter((tag) => recipe.tags.includes(tag)).length
+      }))
+      .sort((left, right) => right.sharedTags - left.sharedTags || left.recipe.name.localeCompare(right.recipe.name))
+      .slice(0, limit)
+      .map((match) => match.recipe);
+  }
+
   function renderRecipe() {
+    const view = document.querySelector('#recipe-view');
+    if (!view) return;
+    const recipe = recipeFromUrl();
+    view.hidden = !recipe;
+    document.querySelector('#recipe-missing').hidden = Boolean(recipe);
+    document.querySelector('#recipe-edit-link').hidden = !recipe;
+    document.querySelector('#recipe-delete').hidden = !recipe;
+    if (!recipe) {
+      document.title = 'MealGrid — Recipe Not Found';
+      document.querySelector('#recipe-meta').textContent = '';
+      return;
+    }
+
+    document.title = `MealGrid — ${recipe.name}`;
+    document.querySelector('#recipe-name').textContent = recipe.name;
+    document.querySelector('#recipe-edit-link').href = editRecipeUrl(recipe);
+    document.querySelector('#recipe-meta').textContent = [
+      `Makes ${pluralize(recipeYield(recipe), 'serving')}`,
+      `Prep ${recipe.prepMinutes || 0} min`,
+      `Cook ${recipe.cookMinutes || 0} min`
+    ].join(' · ');
+
+    const tags = document.querySelector('#recipe-tags');
+    tags.replaceChildren(...recipe.tags.map((tag) => {
+      const chip = document.createElement('span');
+      chip.className = 'chip chip-sm';
+      chip.textContent = tag;
+      return chip;
+    }));
+
+    // The pantry comparison is for the whole batch, as written in the recipe.
+    document.querySelector('#recipe-ingredients-label').textContent =
+      `Ingredients · Full Batch (${pluralize(recipeYield(recipe), 'serving')}) · Pantry Match`;
     const container = document.querySelector('#recipe-ingredients');
-    if (!container) return;
-    const recipe = recipeById('sesame-stir-fry');
     container.replaceChildren();
     for (const ingredient of recipe.ingredients) {
       const item = findPantryItem(ingredient.name, ingredient.unit);
@@ -418,10 +474,42 @@
       row.append(name, status);
       container.append(row);
     }
+
+    document.querySelector('#recipe-steps').replaceChildren(...recipe.steps.map((step) => {
+      const item = document.createElement('li');
+      item.textContent = step;
+      return item;
+    }));
+
+    document.querySelector('#recipe-calories').textContent =
+      Number.isFinite(recipe.calories) ? String(recipe.calories) : '—';
     document.querySelector('#recipe-cost').textContent = `$${costPerServing(recipe).toFixed(2)}`;
+
+    const similar = document.querySelector('#similar-recipes');
+    const matches = similarRecipes(recipe);
+    similar.replaceChildren();
+    if (!matches.length) {
+      const empty = document.createElement('p');
+      empty.className = 'dim';
+      empty.textContent = 'No other recipes in your library yet.';
+      similar.append(empty);
+    }
+    for (const match of matches) {
+      const row = document.createElement('div');
+      row.className = 'list-row';
+      const link = document.createElement('a');
+      link.href = recipeUrl(match);
+      link.textContent = match.name;
+      const stats = document.createElement('span');
+      stats.className = 'dim';
+      stats.textContent = [`$${costPerServing(match).toFixed(2)}`, caloriesLabel(match)].filter(Boolean).join(' · ');
+      row.append(link, stats);
+      similar.append(row);
+    }
+
     const scheduledEntries = state.plan.filter((entry) => entry.recipeId === recipe.id);
     document.querySelector('#recipe-plan-status').textContent = scheduledEntries.length
-      ? `Scheduled ${scheduledEntries.map((entry) => `${entry.day} (${servingsFor(entry)} ${servingsFor(entry) === 1 ? 'serving' : 'servings'})`).join(', ')}.`
+      ? `Scheduled ${scheduledEntries.map((entry) => `${entry.day} (${pluralize(servingsFor(entry), 'serving')})`).join(', ')}.`
       : 'Not yet in this week’s plan.';
     renderScheduleOptions();
     renderScheduleEstimate();
@@ -993,7 +1081,8 @@
     const servingsInput = document.querySelector('#schedule-servings');
     if (!estimate || !servingsInput) return;
     const servings = Number(servingsInput.value);
-    const recipe = recipeById('sesame-stir-fry');
+    const recipe = recipeFromUrl();
+    if (!recipe) return;
     if (!Number.isInteger(servings) || servings < 1 || servings > 12) {
       estimate.textContent = 'Choose between 1 and 12 servings.';
       return;
@@ -1005,6 +1094,8 @@
   function bindRecipeForm() {
     const form = document.querySelector('#schedule-form');
     if (!form) return;
+    const recipe = recipeFromUrl();
+    if (!recipe) return;
     const servingsInput = document.querySelector('#schedule-servings');
     servingsInput.addEventListener('input', renderScheduleEstimate);
     form.addEventListener('submit', (event) => {
@@ -1021,13 +1112,19 @@
         showNotice('Choose between 1 and 12 servings.', true);
         return;
       }
-      state.plan.push({ day, recipeId: 'sesame-stir-fry', servings });
+      state.plan.push({ day, recipeId: recipe.id, servings });
       const saved = saveState();
       form.reset();
       renderAll();
       if (saved) {
-        showNotice(`Garlic Sesame Stir Fry added to ${day}’s plan for ${servings} ${servings === 1 ? 'serving' : 'servings'}.`);
+        showNotice(`${recipe.name} added to ${day}’s plan for ${pluralize(servings, 'serving')}.`);
       }
+    });
+
+    document.querySelector('#recipe-delete').addEventListener('click', () => {
+      if (!deleteRecipe(recipe)) return;
+      flashNotice(`${recipe.name} deleted.`);
+      window.location.href = 'recipes.html';
     });
   }
 
